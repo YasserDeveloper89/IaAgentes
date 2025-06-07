@@ -8,3 +8,4 @@ streamlit-option-menu
 ultralytics
 Pillow
 matplotlib
+opencv-python-headless
