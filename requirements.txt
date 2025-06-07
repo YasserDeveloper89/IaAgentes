@@ -9,3 +9,4 @@ ultralytics
 Pillow
 matplotlib
 opencv-python-headless
+opencv-python
