@@ -74,7 +74,7 @@ def predict_demand_section():
     st.markdown("""
     Por favor, sube un archivo CSV con las siguientes columnas:
 
-    - 📅 **fecha** (formato: YYYY-MM-DD)  
+    - 📅 **fecha** (formato:YYYY-MM-DD)  
     - ☕️ **producto** (nombre del producto)  
     - 🔢 **cantidad** (unidades vendidas)
     """)
@@ -158,16 +158,22 @@ def image_analysis_section():
     uploaded_file = st.file_uploader("Sube imagen (jpg, png)", type=["jpg", "jpeg", "png"])
     if uploaded_file:
         try:
+            st.info("1. Archivo subido. Leyendo imagen...") # Mensaje de depuración
             img_bytes = uploaded_file.read()
             img = Image.open(io.BytesIO(img_bytes))
             st.image(img, caption="Imagen cargada", use_column_width=True)
             
+            st.info("2. Intentando cargar el modelo YOLOv8...") # Mensaje de depuración
             # Carga modelo YOLOv8 preentrenado
             model = YOLO('yolov8n.pt')  # ultralytics debe estar instalado
+            st.info("3. Modelo YOLOv8 cargado exitosamente.") # Mensaje de depuración
             
+            st.info("4. Realizando detección de objetos...") # Mensaje de depuración
             results = model(img)
+            st.info("5. Detección de objetos completada.") # Mensaje de depuración
             
             st.markdown("### Resultados de detección:")
+            # results[0].plot() devuelve un array de NumPy (imagen) que st.image puede mostrar
             res_img = results[0].plot()
             st.image(res_img, caption="Objetos detectados", use_column_width=True)
             
@@ -185,10 +191,11 @@ def image_analysis_section():
                     })
                 st.table(data)
             else:
-                st.info("No se detectaron objetos.")
+                st.info("No se detectaron objetos en la imagen.") # Mensaje actualizado
                 
         except Exception as e:
             st.error(f"Error al procesar la imagen: {e}")
+            st.error("Por favor, verifica los logs de la aplicación para más detalles si estás en Streamlit Cloud.") # Mensaje adicional
     else:
         st.info("Sube una imagen para comenzar el análisis.")
 
@@ -209,3 +216,4 @@ elif selected == "Configuración":
     settings_section()
 else:
     st.write("Selecciona una opción del menú.")
+
