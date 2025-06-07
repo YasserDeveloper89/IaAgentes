@@ -1,25 +1,24 @@
 import pandas as pd
-import streamlit as st
+import plotly.express as px
 
-def analyze_uploaded_file(uploaded_file):
+def analyze_uploaded_file(file) -> tuple[pd.DataFrame, object]:
+    """
+    Carga y análisis básico: resumen + gráfico distribución de una columna numérica (primera que encuentre).
+    """
+
     try:
-        if uploaded_file.name.endswith('.csv'):
-            df = pd.read_csv(uploaded_file)
-        else:
-            df = pd.read_excel(uploaded_file)
-
-        st.success("Archivo cargado correctamente ✅")
-        st.dataframe(df.head())
-
-        st.subheader("📊 Resumen estadístico")
-        st.write(df.describe())
-
-        st.subheader("📈 Gráficos automáticos")
-        numeric_cols = df.select_dtypes(include='number').columns
-        if len(numeric_cols) >= 2:
-            st.line_chart(df[numeric_cols])
-        else:
-            st.warning("No hay suficientes columnas numéricas para graficar.")
-
+        df = pd.read_csv(file)
     except Exception as e:
-        st.error(f"Ocurrió un error al analizar el archivo: {e}")
+        raise ValueError("Error al cargar archivo CSV.") from e
+
+    # Resumen básico
+    summary = df.describe(include='all').transpose()
+
+    # Buscar primera columna numérica para gráfico
+    num_cols = df.select_dtypes(include='number').columns
+    if len(num_cols) == 0:
+        raise ValueError("El archivo no contiene columnas numéricas para análisis gráfico.")
+
+    fig = px.histogram(df, x=num_cols[0], nbins=30, title=f'Distribución de {num_cols[0]}')
+
+    return summary, fig
