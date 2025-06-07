@@ -1,75 +1,63 @@
 import streamlit as st
-from streamlit_option_menu import option_menu
 import yaml
-from pathlib import Path
+import os
+from app.ai_agent import load_and_validate_sales, predict_demand
+from app.data_analysis import analyze_uploaded_file
 
-# Carga de configuración
-CONFIG_PATH = Path(__file__).parent / "config.yaml"
-with open(CONFIG_PATH, "r") as f:
+# Cargar configuración
+CONFIG_PATH = os.path.join('app', 'config.yaml')
+with open(CONFIG_PATH) as f:
     CONFIG = yaml.safe_load(f)
 
-# Estilos dinámicos desde config.yaml
-st.set_page_config(
-    page_title="IA Agentes Inteligentes",
-    layout="wide",
-    initial_sidebar_state="auto",
-)
-
-st.markdown(
-    f"""
-    <style>
-    body {{
-        background-color: {CONFIG['ui']['secondaryBackgroundColor']};
+# CSS para estilo moderno y fondo
+st.markdown(f"""
+<style>
+    .reportview-container {{
+        background-color: {CONFIG['ui']['background_color']};
         font-family: {CONFIG['ui']['font_family']};
     }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+    .sidebar .sidebar-content {{
+        background-color: {CONFIG['ui']['secondary_background_color']};
+    }}
+    .css-1aumxhk {{
+        padding-top: 1rem;
+    }}
+</style>
+""", unsafe_allow_html=True)
 
-# Menú desplegable lateral
+# Menú lateral desplegable
 with st.sidebar:
-    selected = option_menu(
-        menu_title="Menú principal",
-        options=["Inicio", "Predicción de Demanda", "Análisis de Archivos"],
-        icons=["house", "graph-up", "folder"],
-        menu_icon="cast",
-        default_index=0,
-        styles={
-            "container": {"padding": "5px", "background-color": "#f9f9f9"},
-            "icon": {"color": CONFIG['ui']['accent_color'], "font-size": "20px"},
-            "nav-link": {
-                "font-size": "16px",
-                "text-align": "left",
-                "margin": "5px",
-                "--hover-color": "#eee",
-            },
-            "nav-link-selected": {
-                "background-color": CONFIG['ui']['primary_color'],
-                "color": "white",
-            },
-        },
-    )
+    st.title("IA Agentes + Video Analytics")
+    section = st.selectbox("Seleccione sección", 
+                           ["Predicción de Demanda", "Análisis Inteligente de Archivos"])
 
-# INICIO
-if selected == "Inicio":
-    st.title("📊 IA Agentes Inteligentes")
-    st.markdown("Bienvenido. Usa el menú lateral para acceder a herramientas de predicción, análisis y más.")
+st.title(section)
 
-# PREDICCIÓN DE DEMANDA
-elif selected == "Predicción de Demanda":
-    st.title("📈 Predicción de Demanda")
-    from app.ai_agent import predict_demand
+if section == "Predicción de Demanda":
+    st.subheader("Cargue archivo CSV con columnas 'fecha' y 'ventas'")
 
-    uploaded_file = st.file_uploader("Sube un archivo CSV con datos históricos", type=["csv"])
+    uploaded_file = st.file_uploader("Archivo de ventas CSV", type=["csv"])
     if uploaded_file:
-        predict_demand(uploaded_file, CONFIG)
+        try:
+            df = load_and_validate_sales(uploaded_file)
+            st.dataframe(df)
 
-# ANÁLISIS DE ARCHIVOS
-elif selected == "Análisis de Archivos":
-    st.title("🧠 Análisis Inteligente de Archivos")
-    from app.data_analysis import analyze_uploaded_file
+            if st.button("Generar Predicción"):
+                result_df, fig = predict_demand(df, CONFIG)
+                st.plotly_chart(fig, use_container_width=True)
+                st.write(result_df.tail(10))
+        except Exception as e:
+            st.error(f"Error: {e}")
 
-    uploaded_file = st.file_uploader("Sube un archivo CSV o Excel", type=["csv", "xlsx", "xls"])
+elif section == "Análisis Inteligente de Archivos":
+    st.subheader("Cargue archivo CSV para análisis automático")
+
+    uploaded_file = st.file_uploader("Archivo CSV para análisis", type=["csv"])
     if uploaded_file:
-        analyze_uploaded_file(uploaded_file)
+        try:
+            summary, fig = analyze_uploaded_file(uploaded_file)
+            st.write("Resumen Estadístico:")
+            st.dataframe(summary)
+            st.plotly_chart(fig, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error: {e}")
