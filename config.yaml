@@ -2,9 +2,12 @@ ai_agent:
   growth_factor: 1.1
   temporal_adjustment: 1.0
 
+video_analytics:
+  threshold: 60
+  min_contour_area: 500
+
 ui:
-  primary_color: "#0d6efd"
-  accent_color: "#6610f2"
-  font_family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-  background_color: "#f5f7fa"
-  secondary_background_color: "#e9ecef"
+  primary_color: "#1f77b4"
+  accent_color: "#ff7f0e"
+  font_family: "Arial, sans-serif"
+  secondaryBackgroundColor: "#f0f2f6"
