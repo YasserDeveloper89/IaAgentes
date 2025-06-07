@@ -1,67 +1,50 @@
-# app/ai_agent.py
-from typing import Dict
 import pandas as pd
 import logging
 
-logger = logging.getLogger(__name__)
+# Configura logging básico
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-class DataValidationError(Exception):
-    pass
-
-def validate_input_data(df: pd.DataFrame) -> None:
-    required_cols = {"producto", "cantidad", "fecha"}
-    if not required_cols.issubset(df.columns):
-        missing = required_cols - set(df.columns)
-        raise DataValidationError(f"Faltan columnas obligatorias: {missing}")
-    if df.empty:
-        raise DataValidationError("El DataFrame está vacío")
-    if not pd.api.types.is_numeric_dtype(df["cantidad"]):
-        raise DataValidationError("La columna 'cantidad' debe ser numérica")
-    # Validar formato fecha
-    try:
-        pd.to_datetime(df["fecha"])
-    except Exception:
-        raise DataValidationError("La columna 'fecha' tiene formato inválido")
-
-def predict_demand(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
+def predict_demand(uploaded_file, config):
     """
-    Recibe dataframe con ventas históricas y parámetros de configuración.
-    Retorna dataframe con demanda estimada por insumo.
+    Función para predecir demanda basada en un archivo CSV con datos de ventas.
+    Args:
+        uploaded_file: archivo CSV subido por el usuario
+        config: diccionario con configuración (puede usarse para ajustar parámetros)
+
+    Returns:
+        Un DataFrame con predicciones o resumen de datos (ejemplo simple aquí)
+
+    Lanza:
+        RuntimeError con mensaje y la excepción original si ocurre algún error.
     """
-
     try:
-        validate_input_data(df)
-        logger.info("Datos validados correctamente para predicción de demanda")
+        # Leer el CSV
+        df = pd.read_csv(uploaded_file)
 
-        # Preprocesamiento básico
-        df["fecha"] = pd.to_datetime(df["fecha"])
-        df_grouped = (
-            df.groupby(["producto"])
-            .agg({"cantidad": "sum"})
-            .rename(columns={"cantidad": "cantidad_total"})
-            .reset_index()
-        )
+        # Columnas esperadas en el CSV
+        expected_columns = ['fecha', 'producto', 'cantidad_vendida', 'precio_unitario']
+        missing_cols = [col for col in expected_columns if col not in df.columns]
 
-        # Parámetros del modelo (ejemplo simple)
-        factor_crecimiento = config.get("growth_factor", 1.1)
-        ajuste_temporal = config.get("temporal_adjustment", 1.0)
+        if missing_cols:
+            error_msg = f"Faltan columnas requeridas en el archivo: {missing_cols}"
+            logging.error(error_msg)
+            raise ValueError(error_msg)
 
-        # Predicción simple: sumar crecimiento al total histórico
-        df_grouped["cantidad_estimda"] = (
-            df_grouped["cantidad_total"] * factor_crecimiento * ajuste_temporal
-        )
+        # Validar que 'fecha' pueda convertirse a datetime
+        try:
+            df['fecha'] = pd.to_datetime(df['fecha'])
+        except Exception as ex:
+            logging.error(f"Error al convertir la columna 'fecha' a datetime: {ex}")
+            raise ValueError("La columna 'fecha' debe tener formato de fecha válido") from ex
 
-        # Round y tipo de dato
-        df_grouped["cantidad_estimda"] = df_grouped["cantidad_estimda"].round(2)
+        # Aquí iría la lógica real de predicción.
+        # Por simplicidad, hacemos un ejemplo: calcular demanda total por producto
+        demanda_total = df.groupby('producto')['cantidad_vendida'].sum().reset_index()
+        demanda_total.rename(columns={'cantidad_vendida': 'demanda_total'}, inplace=True)
 
-        logger.info("Predicción de demanda calculada exitosamente")
-        return df_grouped[["producto", "cantidad_estimda"]].rename(
-            columns={"producto": "insumo"}
-        )
+        logging.info("Predicción de demanda calculada correctamente.")
+        return demanda_total
 
-    except DataValidationError as ve:
-        logger.error(f"Error de validación: {ve}")
-        raise
     except Exception as ex:
-        logger.error(f"Error en predict_demand: {ex}", exc_info=True)
+        logging.error("Error en predict_demand", exc_info=True)
         raise RuntimeError("Error inesperado en predicción de demanda") from ex
