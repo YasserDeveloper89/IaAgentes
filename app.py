@@ -15,33 +15,62 @@ st.set_page_config(page_title="AI Agents + Video Analytics", layout="wide", page
 
 # --- ESTILOS CSS PARA ESTÉTICA MODERNA ---
 st.markdown(f"""
-    <style>
-        .css-1d391kg {{
-            background-color: {BACKGROUND_COLOR};
-            font-family: {FONT_FAMILY};
-        }}
-        .stApp {{
-            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
-            color: #333;
-            font-family: {FONT_FAMILY};
-        }}
-        .sidebar .sidebar-content {{
-            background-color: {PRIMARY_COLOR};
-            color: white;
-            font-family: {FONT_FAMILY};
-        }}
-        .css-1d391kg .stButton>button {{
-            background-color: {ACCENT_COLOR};
-            color: white;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-weight: bold;
-        }}
-        .css-1d391kg .stButton>button:hover {{
-            background-color: #e67300;
-            color: white;
-        }}
-    </style>
+<style>
+    /* Fondo y tipografía general */
+    .css-1d391kg {{
+        background-color: {BACKGROUND_COLOR};
+        font-family: {FONT_FAMILY};
+    }}
+    .stApp {{
+        background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+        color: #333;
+        font-family: {FONT_FAMILY};
+    }}
+
+    /* Sidebar */
+    .sidebar .sidebar-content {{
+        background-color: {PRIMARY_COLOR};
+        color: white;
+        font-family: {FONT_FAMILY};
+    }}
+
+    /* Botones */
+    .css-1d391kg .stButton>button {{
+        background-color: {ACCENT_COLOR};
+        color: white;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+    }}
+    .css-1d391kg .stButton>button:hover {{
+        background-color: #e67300;
+        color: white;
+    }}
+
+    /* Tablas */
+    table {{
+        border-collapse: collapse;
+        width: 100%;
+    }}
+    th, td {{
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }}
+    th {{
+        background-color: {PRIMARY_COLOR};
+        color: white;
+    }}
+    tr:nth-child(even){{background-color: #f2f2f2;}}
+
+    /* Títulos y subtítulos */
+    .stMarkdown h1, .stMarkdown h2 {{
+        font-family: {FONT_FAMILY};
+        font-weight: 700;
+        color: #222;
+    }}
+</style>
 """, unsafe_allow_html=True)
 
 # --- MENU LATERAL CON streamlit-option-menu ---
@@ -64,7 +93,7 @@ with st.sidebar:
 def predict_demand_section():
     st.title("📊 Predicción de Demanda")
     st.markdown("""
-    Carga un CSV con las columnas:
+    Carga un archivo CSV con las columnas:
     - **fecha** (YYYY-MM-DD)
     - **producto**
     - **cantidad** (vendida)
@@ -92,16 +121,28 @@ def predict_demand_section():
             future_dates = [df_producto['fecha'].iloc[-1] + timedelta(days=i) for i in range(1, forecast_days + 1)]
             forecast_values = [last_avg * (growth_factor ** i) for i in range(1, forecast_days + 1)]
             
-            forecast_df = pd.DataFrame({'fecha': future_dates, 'predicted_cantidad': forecast_values})
+            forecast_df = pd.DataFrame({
+                'Fecha': future_dates,
+                'Cantidad Pronosticada': forecast_values
+            })
             
-            st.subheader(f"Pronóstico para: {producto_sel}")
-            combined = pd.concat([
-                df_producto.set_index('fecha')['cantidad'],
-                forecast_df.set_index('fecha')['predicted_cantidad']
-            ])
-            fig = px.line(combined, labels={'index':'Fecha', 'value':'Cantidad'}, title="Demanda Histórica y Pronóstico")
+            st.subheader(f"Pronóstico para producto: {producto_sel}")
+            
+            # Crear DataFrame combinado para gráfico
+            df_hist = df_producto[['fecha', 'cantidad']].rename(columns={'fecha': 'Fecha', 'cantidad': 'Cantidad'})
+            df_hist['Tipo'] = 'Histórico'
+            forecast_df['Tipo'] = 'Pronóstico'
+            forecast_df_renamed = forecast_df.rename(columns={'Cantidad Pronosticada': 'Cantidad'})
+            
+            df_plot = pd.concat([df_hist, forecast_df_renamed], ignore_index=True)
+            
+            fig = px.line(df_plot, x='Fecha', y='Cantidad', color='Tipo',
+                          title="Demanda Histórica y Pronóstico",
+                          labels={'Cantidad': 'Cantidad', 'Fecha': 'Fecha', 'Tipo': 'Tipo de dato'})
             st.plotly_chart(fig, use_container_width=True)
-            st.write(forecast_df)
+            
+            st.markdown("### Tabla de Pronóstico")
+            st.dataframe(forecast_df.style.format({"Cantidad Pronosticada": "{:.2f}"}))
             
         except Exception as e:
             st.error(f"Error al procesar el archivo: {e}")
