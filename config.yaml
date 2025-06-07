@@ -1,1 +1,12 @@
-/app/config.yaml
+ai_agent:
+  growth_factor: 1.1
+  temporal_adjustment: 1.0
+
+video_analytics:
+  threshold: 60
+  min_contour_area: 500
+
+ui:
+  primary_color: "#1f77b4"
+  accent_color: "#ff7f0e"
+  font_family: "Arial, sans-serif"
