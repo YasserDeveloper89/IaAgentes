@@ -1,46 +1,58 @@
+import streamlit as st
 import pandas as pd
-import numpy as np
+from datetime import datetime
+import matplotlib.pyplot as plt
+import seaborn as sns
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-def predict_demand(file, config):
-    """
-    Recibe archivo CSV con ventas históricas y devuelve dataframe con predicción de demanda para próximas fechas.
-    Espera columnas: fecha (YYYY-MM-DD), producto, cantidad_vendida
-    """
-    df = pd.read_csv(file)
-    
-    # Validación básica
-    if not all(col in df.columns for col in ['fecha', 'producto', 'cantidad_vendida']):
-        raise ValueError("El archivo debe contener columnas: fecha, producto, cantidad_vendida")
-    
-    # Convertir fecha a datetime
-    df['fecha'] = pd.to_datetime(df['fecha'])
-    
-    # Agrupar ventas diarias por producto
-    daily_sales = df.groupby(['fecha', 'producto'])['cantidad_vendida'].sum().reset_index()
-    
-    # Predicción sencilla: media móvil + crecimiento según config
-    growth_factor = config.get('ai_agent', {}).get('growth_factor', 1.1)
-    
-    # Ultima fecha
-    last_date = daily_sales['fecha'].max()
-    
-    # Generar predicciones para 7 días siguientes para cada producto
-    products = daily_sales['producto'].unique()
-    future_dates = pd.date_range(last_date + pd.Timedelta(days=1), periods=7)
-    
-    predictions = []
-    for product in products:
-        prod_sales = daily_sales[daily_sales['producto'] == product].sort_values('fecha')
-        # Media movil simple de los últimos 7 días
-        rolling_avg = prod_sales['cantidad_vendida'].rolling(window=7, min_periods=1).mean().iloc[-1]
+def predict_demand_ui():
+    st.header("Predicción de Demanda")
+
+    uploaded_file = st.file_uploader("Carga tu archivo CSV con columnas: fecha, producto, cantidad", type=["csv"])
+
+    if uploaded_file:
+        try:
+            data = pd.read_csv(uploaded_file, parse_dates=["fecha"])
+        except Exception as e:
+            st.error(f"Error leyendo el archivo CSV: {e}")
+            return
         
-        for date in future_dates:
-            predicted_qty = rolling_avg * growth_factor
-            predictions.append({
-                'fecha': date.strftime('%Y-%m-%d'),
-                'producto': product,
-                'cantidad_predicha': round(predicted_qty, 2)
+        if not set(["fecha", "producto", "cantidad"]).issubset(data.columns):
+            st.error("El CSV debe contener las columnas: 'fecha', 'producto', 'cantidad'")
+            return
+        
+        productos = data["producto"].unique()
+        producto_seleccionado = st.selectbox("Selecciona el producto para la predicción", productos)
+
+        df_prod = data[data["producto"] == producto_seleccionado].copy()
+        df_prod = df_prod.sort_values("fecha")
+
+        st.markdown(f"### Datos históricos para *{producto_seleccionado}*")
+        st.dataframe(df_prod.style.format({"cantidad": "{:,.0f}"}))
+
+        # Modelo simple de Holt-Winters para predicción (puedes mejorar este modelo luego)
+        try:
+            model = ExponentialSmoothing(df_prod["cantidad"], trend="add", seasonal=None).fit()
+            pred_len = st.slider("Días a predecir", 1, 30, 7)
+            pred = model.forecast(pred_len)
+
+            pred_df = pd.DataFrame({
+                "fecha": pd.date_range(start=df_prod["fecha"].max() + pd.Timedelta(days=1), periods=pred_len),
+                "Cantidad Predicha": pred.round().astype(int)
             })
-    
-    pred_df = pd.DataFrame(predictions)
-    return pred_df
+
+            st.markdown("### Predicción de demanda futura")
+            st.dataframe(pred_df.style.format({"Cantidad Predicha": "{:,.0f}"}))
+
+            # Gráfico combinado
+            fig, ax = plt.subplots(figsize=(10,5))
+            sns.lineplot(x="fecha", y="cantidad", data=df_prod, marker="o", label="Histórico", ax=ax)
+            sns.lineplot(x="fecha", y="Cantidad Predicha", data=pred_df, marker="o", label="Predicción", ax=ax)
+            ax.set_title(f"Demanda histórica y predicha para {producto_seleccionado}")
+            ax.set_xlabel("Fecha")
+            ax.set_ylabel("Cantidad")
+            ax.legend()
+            st.pyplot(fig)
+
+        except Exception as e:
+            st.error(f"Error en el modelo de predicción: {e}")
