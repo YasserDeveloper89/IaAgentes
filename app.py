@@ -1,63 +1,41 @@
-import streamlit as st
-import yaml
 import os
-from app.ai_agent import load_and_validate_sales, predict_demand
-from app.data_analysis import analyze_uploaded_file
+import yaml
+import streamlit as st
 
-# Cargar configuración
-CONFIG_PATH = os.path.join('app', 'config.yaml')
-with open(CONFIG_PATH) as f:
-    CONFIG = yaml.safe_load(f)
+# --- Cargar configuración ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(BASE_DIR, "config.yaml")
 
-# CSS para estilo moderno y fondo
+try:
+    with open(CONFIG_PATH, "r") as f:
+        CONFIG = yaml.safe_load(f)
+except Exception as e:
+    st.error(f"No se pudo cargar la configuración: {e}")
+    st.stop()
+
+# --- Aplicar estilos desde configuración ---
+primary_color = CONFIG.get('ui', {}).get('primary_color', '#1f77b4')
+accent_color = CONFIG.get('ui', {}).get('accent_color', '#ff7f0e')
+font_family = CONFIG.get('ui', {}).get('font_family', 'Arial, sans-serif')
+secondary_bg = CONFIG.get('ui', {}).get('secondaryBackgroundColor', '#f0f2f6')
+
 st.markdown(f"""
-<style>
-    .reportview-container {{
-        background-color: {CONFIG['ui']['background_color']};
-        font-family: {CONFIG['ui']['font_family']};
+    <style>
+    body {{
+        background-color: {secondary_bg};
+        font-family: {font_family};
     }}
-    .sidebar .sidebar-content {{
-        background-color: {CONFIG['ui']['secondary_background_color']};
+    .css-1d391kg {{
+        background-color: {primary_color};
     }}
-    .css-1aumxhk {{
-        padding-top: 1rem;
+    .stButton>button {{
+        background-color: {accent_color};
+        color: white;
+        border-radius: 8px;
+        padding: 8px 16px;
     }}
-</style>
+    </style>
 """, unsafe_allow_html=True)
 
-# Menú lateral desplegable
-with st.sidebar:
-    st.title("IA Agentes + Video Analytics")
-    section = st.selectbox("Seleccione sección", 
-                           ["Predicción de Demanda", "Análisis Inteligente de Archivos"])
-
-st.title(section)
-
-if section == "Predicción de Demanda":
-    st.subheader("Cargue archivo CSV con columnas 'fecha' y 'ventas'")
-
-    uploaded_file = st.file_uploader("Archivo de ventas CSV", type=["csv"])
-    if uploaded_file:
-        try:
-            df = load_and_validate_sales(uploaded_file)
-            st.dataframe(df)
-
-            if st.button("Generar Predicción"):
-                result_df, fig = predict_demand(df, CONFIG)
-                st.plotly_chart(fig, use_container_width=True)
-                st.write(result_df.tail(10))
-        except Exception as e:
-            st.error(f"Error: {e}")
-
-elif section == "Análisis Inteligente de Archivos":
-    st.subheader("Cargue archivo CSV para análisis automático")
-
-    uploaded_file = st.file_uploader("Archivo CSV para análisis", type=["csv"])
-    if uploaded_file:
-        try:
-            summary, fig = analyze_uploaded_file(uploaded_file)
-            st.write("Resumen Estadístico:")
-            st.dataframe(summary)
-            st.plotly_chart(fig, use_container_width=True)
-        except Exception as e:
-            st.error(f"Error: {e}")
+# --- Título ---
+st.title("Aplicación AI Agents + Video Analytics")
