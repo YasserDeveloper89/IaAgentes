@@ -1,7 +1,6 @@
 import streamlit as st
 import yaml
 from app.ai_agent import predict_demand
-from app.video_analytics import analyze_occupancy, analyze_behavior
 from app.data_analysis import analyze_uploaded_file
 
 # Cargar configuración
