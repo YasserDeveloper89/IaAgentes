@@ -10,3 +10,4 @@ ui:
   primary_color: "#1f77b4"
   accent_color: "#ff7f0e"
   font_family: "Arial, sans-serif"
+  secondaryBackgroundColor: "#f0f2f6"
