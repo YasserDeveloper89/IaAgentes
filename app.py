@@ -7,65 +7,56 @@ import plotly.express as px
 from ultralytics import YOLO
 from PIL import Image
 
-# --- CONFIGURACIÓN DE ESTILO Y PÁGINA ---
-BACKGROUND_COLOR = "#0A0A1E"
-PRIMARY_COLOR_FUTURISTIC = "#00BCD4"
-TEXT_COLOR = "#E0E0E0"
-FONT_FAMILY = "Segoe UI, Arial, sans-serif"
-
+# --- Configuración de la página y estilo visual ---
 st.set_page_config(
     page_title="Plataforma de Herramientas Inteligentes",
     layout="wide",
     initial_sidebar_state="expanded",
-    page_icon="🤖"
+    page_icon="🧠"
 )
 
-st.markdown(f"""
+st.markdown("""
     <style>
-        .stApp {{
-            background-color: {BACKGROUND_COLOR};
-            color: {TEXT_COLOR};
-            font-family: {FONT_FAMILY};
-        }}
-        .stSidebar {{ background-color: #1A1A30; }}
-        h1, h2, h3 {{ color: {PRIMARY_COLOR_FUTURISTIC}; }}
+        .stApp {
+            background-color: #0A0A1E;
+            color: #E0E0E0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .stSidebar {
+            background-color: #1A1A30;
+        }
+        h1, h2, h3 {
+            color: #00BCD4;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# Traducciones para etiquetas detectadas por YOLO
+# Traducción de etiquetas de objetos
 LABEL_TRANSLATIONS = {
-    'person': 'Persona',
-    'bottle': 'Botella',
-    'cup': 'Taza',
-    'jeringa': 'Jeringa',
-    'mascarilla': 'Mascarilla',
-    'guantes medicos': 'Guantes Médicos',
-    'fresa': 'Fresa',
-    'uva': 'Uva',
-    'plato': 'Plato',
-    'vaso': 'Vaso'
+    'person': 'Persona', 'bottle': 'Botella', 'cup': 'Taza',
+    'jeringa': 'Jeringa', 'mascarilla': 'Mascarilla', 'guantes medicos': 'Guantes Médicos',
+    'fresa': 'Fresa', 'uva': 'Uva', 'plato': 'Plato', 'vaso': 'Vaso'
 }
 
-# --- Lógica de selección de tipo de negocio ---
+# Selección del tipo de negocio
 if 'business_type' not in st.session_state:
     st.session_state.business_type = None
 
 if st.session_state.business_type is None:
     st.title("Plataforma de Herramientas Inteligentes para Restaurantes y Clínicas")
-    st.markdown("Selecciona el tipo de negocio para comenzar:")
-
+    st.markdown("Seleccione el tipo de negocio para comenzar a utilizar las herramientas disponibles.")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Soy un Restaurante"):
+        if st.button("Restaurante"):
             st.session_state.business_type = "Restaurante"
             st.rerun()
     with col2:
-        if st.button("Soy una Clínica"):
+        if st.button("Clínica"):
             st.session_state.business_type = "Clínica"
             st.rerun()
 else:
     st.sidebar.title(f"Negocio seleccionado: {st.session_state.business_type}")
-    if st.sidebar.button("Cambiar negocio"):
+    if st.sidebar.button("Cambiar tipo de negocio"):
         st.session_state.business_type = None
         st.rerun()
 
@@ -77,118 +68,151 @@ else:
             default_index=0,
             styles={
                 "container": {"padding": "5px", "background-color": "#1A1A30"},
-                "icon": {"color": PRIMARY_COLOR_FUTURISTIC, "font-size": "20px"},
-                "nav-link": {"font-size": "16px", "text-align": "left", "color": TEXT_COLOR},
-                "nav-link-selected": {"background-color": PRIMARY_COLOR_FUTURISTIC, "color": "#FFFFFF"}
+                "icon": {"color": "#00BCD4", "font-size": "20px"},
+                "nav-link": {"font-size": "16px", "text-align": "left", "color": "#E0E0E0"},
+                "nav-link-selected": {"background-color": "#00BCD4", "color": "#FFFFFF"}
             }
-)
-        # --- Herramientas de la plataforma ---
+        )
+        # --- Herramientas disponibles ---
 
 def predict_demand_section():
-    st.title("📊 Predicción de Demanda")
-    file = st.file_uploader("Sube un archivo CSV con columnas: fecha, elemento, cantidad", type=["csv"])
+    st.title("Predicción de Demanda de Productos")
+    st.markdown("Esta herramienta permite estimar la demanda futura de un producto a partir de datos históricos.")
+
+    file = st.file_uploader("Seleccione un archivo CSV con columnas: fecha, elemento, cantidad", type=["csv"])
     if file:
         df = pd.read_csv(file, parse_dates=["fecha"])
         if not all(col in df.columns for col in ["fecha", "elemento", "cantidad"]):
-            st.error("El archivo debe contener las columnas: fecha, elemento, cantidad")
+            st.error("El archivo debe contener las columnas: fecha, elemento y cantidad.")
             return
 
+        st.subheader("Vista previa de datos")
         st.dataframe(df)
-        elemento = st.selectbox("Selecciona el elemento", df["elemento"].unique())
-        df_filtrado = df[df["elemento"] == elemento].sort_values("fecha")
 
-        ventana = st.slider("Tamaño de ventana móvil", 2, 10, 3)
-        crecimiento = st.slider("Crecimiento esperado (%)", 0, 100, 5) / 100
-        dias = st.slider("Días a predecir", 1, 30, 7)
+        elemento = st.selectbox("Seleccione el producto a analizar", df["elemento"].unique())
+        df_filtro = df[df["elemento"] == elemento].sort_values("fecha")
 
-        df_filtrado["media_movil"] = df_filtrado["cantidad"].rolling(window=ventana).mean()
-        valor_base = df_filtrado["media_movil"].dropna().iloc[-1] if not df_filtrado["media_movil"].dropna().empty else df_filtrado["cantidad"].mean()
-        fechas = [df_filtrado["fecha"].max() + timedelta(days=i) for i in range(1, dias+1)]
-        cantidades = [round(valor_base * (1 + crecimiento) ** i) for i in range(1, dias+1)]
+        ventana = st.slider(
+            "Tamaño de ventana móvil",
+            2, 10, 3,
+            help="Cantidad de días recientes usados para calcular el promedio base de demanda."
+        )
+        crecimiento = st.slider(
+            "Tasa de crecimiento estimada (%)",
+            0, 100, 5,
+            help="Porcentaje diario de crecimiento esperado en la demanda futura."
+        ) / 100
+        dias = st.slider(
+            "Días a predecir",
+            1, 30, 7,
+            help="Número de días hacia el futuro para los que se desea realizar la predicción."
+        )
+
+        df_filtro["media_movil"] = df_filtro["cantidad"].rolling(window=ventana).mean()
+        base = df_filtro["media_movil"].dropna().iloc[-1] if not df_filtro["media_movil"].dropna().empty else df_filtro["cantidad"].mean()
+        fechas = [df_filtro["fecha"].max() + timedelta(days=i) for i in range(1, dias+1)]
+        cantidades = [round(base * (1 + crecimiento) ** i) for i in range(1, dias+1)]
         pred_df = pd.DataFrame({"Fecha": fechas, "Cantidad Prevista": cantidades})
 
-        fig = px.line(pred_df, x="Fecha", y="Cantidad Prevista", title=f"Predicción de Demanda para {elemento}")
+        st.subheader("Proyección estimada")
+        fig = px.line(pred_df, x="Fecha", y="Cantidad Prevista", title=f"Predicción de Demanda: {elemento}")
         st.plotly_chart(fig)
         st.dataframe(pred_df)
 
 def file_analysis_section():
-    st.title("📂 Análisis de Archivos CSV")
-    file = st.file_uploader("Sube archivo CSV", type=["csv"])
+    st.title("Análisis de Archivos CSV")
+    st.markdown("Este módulo permite visualizar y explorar datos tabulares almacenados en archivos CSV.")
+
+    file = st.file_uploader("Seleccione un archivo CSV", type=["csv"])
     if file:
         df = pd.read_csv(file)
-        st.subheader("Vista previa de los datos")
+        st.subheader("Vista previa")
         st.dataframe(df.head(10))
 
-        st.subheader("📊 Estadísticas generales")
-        descripcion = df.describe(include='all').T
-        descripcion.rename(columns={
+        st.subheader("Estadísticas descriptivas")
+        desc = df.describe(include='all').T
+        desc.rename(columns={
             "count": "Cantidad",
             "unique": "Valores Únicos",
-            "top": "Más Frecuente",
+            "top": "Valor Más Frecuente",
             "freq": "Frecuencia",
             "mean": "Promedio",
             "std": "Desviación Estándar",
             "min": "Mínimo",
-            "25%": "Percentil 25%",
+            "25%": "Percentil 25",
             "50%": "Mediana",
-            "75%": "Percentil 75%",
+            "75%": "Percentil 75",
             "max": "Máximo"
         }, inplace=True)
-        st.dataframe(descripcion)
+        st.dataframe(desc)
 
-        columnas_numericas = df.select_dtypes(include=np.number).columns.tolist()
-        if columnas_numericas:
-            col = st.selectbox("Selecciona una columna numérica", columnas_numericas)
-            st.subheader("Distribución (Histograma)")
-            st.plotly_chart(px.histogram(df, x=col, nbins=30, title=f"Distribución de {col}"))
-            st.subheader("Valores Atípicos (Boxplot)")
-            st.plotly_chart(px.box(df, y=col, title=f"Diagrama de Caja de {col}"))
+        columnas_num = df.select_dtypes(include=np.number).columns.tolist()
+        if columnas_num:
+            col = st.selectbox("Seleccione una columna numérica para análisis visual", columnas_num)
+            st.subheader("Distribución")
+            st.plotly_chart(px.histogram(df, x=col, nbins=30, title=f"Histograma de {col}"))
+            st.subheader("Análisis de valores extremos")
+            st.plotly_chart(px.box(df, y=col, title=f"Boxplot de {col}"))
 
 def image_analysis_section():
-    st.title("📸 Análisis Inteligente de Imágenes")
+    st.title("Análisis de Imágenes con Detección de Objetos")
+    st.markdown("Detecta objetos en imágenes utilizando modelos de inteligencia artificial.")
+
     modelo = st.radio("Modelo de detección", ["YOLOv8 General", "YOLO-World"])
 
-    # Objetos sugeridos por tipo de negocio
-    default_objetos = ""
+    objetos_default = ""
     if st.session_state.business_type == "Restaurante":
-        default_objetos = "fresa, uva, plátano, empanada, pizza, plato, vaso, cuchillo, tenedor"
+        objetos_default = "fresa, uva, empanada, plato, cuchillo, vaso"
     elif st.session_state.business_type == "Clínica":
-        default_objetos = "jeringa, guantes médicos, mascarilla, termómetro, camilla, medicamento"
+        objetos_default = "jeringa, mascarilla, guantes médicos, termómetro, camilla"
 
-    objetos = st.text_input("📝 Objetos personalizados a detectar (separados por coma)", value=default_objetos)
-    archivo = st.file_uploader("Sube una imagen (JPG, PNG)", type=["jpg", "jpeg", "png"])
-    if archivo:
-        imagen = Image.open(archivo)
-        st.image(imagen, caption="Imagen original", use_container_width=True)
+    objetos = st.text_input(
+        "Lista de objetos personalizados (solo para YOLO-World)",
+        value=objetos_default,
+        help="Escriba los objetos a detectar separados por coma. Ejemplo: jeringa, guantes médicos"
+    )
+
+    imagen = st.file_uploader("Suba una imagen en formato JPG o PNG", type=["jpg", "jpeg", "png"])
+    if imagen:
+        img = Image.open(imagen)
+        st.image(img, caption="Imagen cargada", use_container_width=True)
+
         modelo_yolo = YOLO("yolov8n.pt" if modelo == "YOLOv8 General" else "yolov8s-world.pt")
         if modelo == "YOLO-World" and objetos.strip():
-            modelo_yolo.set_classes([c.strip().lower() for c in objetos.split(",") if c.strip()])
-        resultado = modelo_yolo(imagen)[0]
-        st.image(resultado.plot(), caption="Resultado IA", use_container_width=True)
+            try:
+                modelo_yolo.set_classes([o.strip().lower() for o in objetos.split(",") if o.strip()])
+            except Exception as e:
+                st.warning("El modelo requiere la librería CLIP para personalizar objetos.")
+                st.error(str(e))
+                return
+
+        resultado = modelo_yolo(img)[0]
+        st.image(resultado.plot(), caption="Resultado del análisis", use_container_width=True)
 
         boxes = resultado.boxes.data.cpu().numpy()
         nombres = resultado.names
-        datos = []
+        filas = []
         for box in boxes:
-            x1, y1, x2, y2, score, clase = box
-            etiqueta = nombres[int(clase)]
-            nombre_es = LABEL_TRANSLATIONS.get(etiqueta.lower(), etiqueta)
-            datos.append({
-                "Objeto Detectado": nombre_es,
+            x1, y1, x2, y2, score, cls = box
+            nombre = nombres[int(cls)]
+            traducido = LABEL_TRANSLATIONS.get(nombre.lower(), nombre)
+            filas.append({
+                "Objeto": traducido,
                 "Confianza": f"{score * 100:.2f}%",
-                "Coordenadas": f"[{int(x1)}, {int(y1)}, {int(x2)}, {int(y2)}]"
+                "Ubicación (px)": f"[{int(x1)}, {int(y1)}, {int(x2)}, {int(y2)}]"
             })
-        if datos:
-            st.subheader("📋 Objetos Detectados")
-            st.dataframe(pd.DataFrame(datos))
+
+        if filas:
+            st.subheader("Objetos detectados")
+            st.dataframe(pd.DataFrame(filas))
         else:
-            st.info("No se detectaron objetos con el modelo seleccionado.")
+            st.info("No se detectaron objetos en la imagen proporcionada.")
 
 def settings_section():
-    st.title("⚙️ Configuración")
-    st.info("Aquí podrás configurar preferencias personalizadas en futuras versiones.")
+    st.title("Configuración")
+    st.markdown("Esta sección permitirá modificar parámetros globales de la aplicación en futuras versiones.")
 
-# --- Ruteo según selección ---
+# --- Ruteo de herramientas según menú seleccionado ---
 if st.session_state.business_type:
     if selected == "Predicción de Demanda":
         predict_demand_section()
