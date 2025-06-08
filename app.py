@@ -67,8 +67,9 @@ else:
                 "nav-link": {"font-size": "16px", "text-align": "left", "color": "#E0E0E0"},
                 "nav-link-selected": {"background-color": "#00BCD4", "color": "#FFFFFF"}
             }
-    )
-        def predict_demand_section():
+        )
+
+    def predict_demand_section():
         st.title("Predicción de Demanda")
         archivo = st.file_uploader("Suba un archivo CSV con columnas: fecha, elemento, cantidad", type=["csv"])
         if archivo:
