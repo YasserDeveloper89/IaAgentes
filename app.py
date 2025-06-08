@@ -58,7 +58,13 @@ else:
     with st.sidebar:
         selected = option_menu(
             menu_title="Herramientas de IA",
-            options=["Predicción de Demanda", "Análisis de Archivos", "Análisis de Imágenes", "Análisis de Vídeo", "Configuración"],
+            options=[
+                "Predicción de Demanda",
+                "Análisis de Archivos",
+                "Análisis de Imágenes",
+                "Análisis de Vídeo",
+                "Configuración"
+            ],
             icons=["bar-chart-line", "file-earmark-text", "image", "camera-video", "gear"],
             default_index=0,
             styles={
@@ -70,16 +76,19 @@ else:
         )
 
     def predict_demand_section():
-        st.title("Predicción de Demanda")
-        archivo = st.file_uploader("Suba un archivo CSV con columnas: fecha, elemento, cantidad", type=["csv"])
+        st.title("📈 Predicción de Demanda")
+        st.markdown("Suba un archivo CSV con las columnas: `fecha`, `elemento`, `cantidad`. El sistema proyectará la demanda futura.")
+
+        archivo = st.file_uploader("Seleccione el archivo CSV", type=["csv"])
         if archivo:
             df = pd.read_csv(archivo, parse_dates=["fecha"])
             if not all(col in df.columns for col in ["fecha", "elemento", "cantidad"]):
-                st.error("El archivo debe contener: fecha, elemento y cantidad.")
+                st.error("El archivo debe contener las columnas: fecha, elemento, cantidad.")
                 return
 
-            st.dataframe(df)
-            producto = st.selectbox("Seleccione un producto", df["elemento"].unique())
+            st.dataframe(df.head())
+
+            producto = st.selectbox("Seleccione un producto para predecir", df["elemento"].unique())
             datos = df[df["elemento"] == producto].sort_values("fecha")
 
             ventana = st.slider("Tamaño de ventana móvil (días)", 2, 10, 3)
@@ -88,22 +97,24 @@ else:
 
             datos["media_movil"] = datos["cantidad"].rolling(window=ventana).mean()
             base = datos["media_movil"].dropna().iloc[-1] if not datos["media_movil"].dropna().empty else datos["cantidad"].mean()
-            fechas = [datos["fecha"].max() + timedelta(days=i) for i in range(1, dias+1)]
-            cantidades = [round(base * (1 + crecimiento) ** i) for i in range(1, dias+1)]
-            pred = pd.DataFrame({"Fecha": fechas, "Cantidad Prevista": cantidades})
+            fechas = [datos["fecha"].max() + timedelta(days=i) for i in range(1, dias + 1)]
+            cantidades = [round(base * (1 + crecimiento) ** i) for i in range(1, dias + 1)]
 
+            pred = pd.DataFrame({"Fecha": fechas, "Cantidad Prevista": cantidades})
             st.plotly_chart(px.line(pred, x="Fecha", y="Cantidad Prevista", title=f"Proyección de demanda: {producto}"))
             st.dataframe(pred)
 
     def file_analysis_section():
-        st.title("Análisis de Archivos CSV")
+        st.title("📂 Análisis de Archivos CSV")
+        st.markdown("Explore y analice sus archivos de datos. Esta herramienta genera estadísticas y visualizaciones automáticamente.")
+
         archivo = st.file_uploader("Suba su archivo CSV", type=["csv"])
         if archivo:
             df = pd.read_csv(archivo)
             st.subheader("Vista previa")
             st.dataframe(df.head(10))
 
-            st.subheader("Estadísticas")
+            st.subheader("Estadísticas generales")
             desc = df.describe(include='all').T
             desc.rename(columns={
                 "count": "Cantidad", "unique": "Valores Únicos", "top": "Más Frecuente", "freq": "Frecuencia",
@@ -113,18 +124,18 @@ else:
 
             columnas = df.select_dtypes(include=np.number).columns.tolist()
             if columnas:
-                col = st.selectbox("Columna numérica", columnas)
+                col = st.selectbox("Columna numérica para visualizar", columnas)
                 st.plotly_chart(px.histogram(df, x=col, nbins=30))
                 st.plotly_chart(px.box(df, y=col))
+                def image_analysis_section():
+        st.title("🖼 Análisis de Imágenes con IA")
+        st.markdown("Suba una imagen y elija un modelo de detección. Puede definir objetos personalizados (en inglés) para mayor precisión.")
 
-    def image_analysis_section():
-        st.title("Análisis de Imágenes")
         modelo = st.radio("Modelo de detección", ["YOLOv8 General", "YOLO-World"])
-
         objetos_por_defecto = "strawberry, grape, banana, empanada, pizza, plate, knife, fork" if st.session_state.business_type == "Restaurante" else "face mask, syringe, medical gloves, thermometer, hospital bed"
         objetos = st.text_input("Objetos personalizados (solo YOLO-World)", value=objetos_por_defecto)
 
-        archivo = st.file_uploader("Cargue una imagen (jpg/png)", type=["jpg", "jpeg", "png"])
+        archivo = st.file_uploader("Cargue una imagen (JPG o PNG)", type=["jpg", "jpeg", "png"])
         if archivo:
             imagen = Image.open(archivo)
             st.image(imagen, caption="Imagen original", use_container_width=True)
@@ -134,12 +145,12 @@ else:
                 try:
                     modelo_yolo.set_classes([o.strip().lower() for o in objetos.split(",") if o.strip()])
                 except Exception as e:
-                    st.warning("Requiere 'open-clip'.")
+                    st.warning("Error al cargar objetos personalizados. ¿Está instalada la librería 'open-clip'?")
                     st.error(str(e))
                     return
 
             resultado = modelo_yolo(imagen)[0]
-            st.image(resultado.plot(), caption="Resultado", use_container_width=True)
+            st.image(resultado.plot(), caption="Resultado del análisis", use_container_width=True)
 
             cajas = resultado.boxes.data.cpu().numpy()
             nombres = resultado.names
@@ -161,13 +172,14 @@ else:
                 st.info("No se detectaron objetos en la imagen.")
 
     def video_analysis_section():
-        st.title("Análisis de Vídeo")
-        st.markdown("Suba un vídeo grabado. La IA analizará cuántas personas aparecen por cuadro (limitado a los primeros 150).")
+        st.title("🎥 Análisis de Vídeo en Frames")
+        st.markdown("Suba un vídeo corto. La inteligencia artificial detectará cuántas personas aparecen por cuadro.")
 
-        video_file = st.file_uploader("Seleccione un archivo de vídeo", type=["mp4", "mov", "avi"])
+        video_file = st.file_uploader("Seleccione un vídeo (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
         if video_file:
             import tempfile
             import cv2
+            import plotly.graph_objects as go
 
             temp = tempfile.NamedTemporaryFile(delete=False)
             temp.write(video_file.read())
@@ -177,25 +189,50 @@ else:
             frame_count = 0
             data = []
 
-            while cap.isOpened():
-                ret, frame = cap.read()
-                if not ret or frame_count > 150:
-                    break
-                result = model(frame, verbose=False)[0]
-                boxes = result.boxes
-                persons = sum(1 for i in range(len(boxes.cls)) if int(boxes.cls[i]) == 0)
-                data.append({"Frame": frame_count, "Personas Detectadas": persons})
-                frame_count += 1
-            cap.release()
+            with st.spinner("Procesando vídeo, espere un momento..."):
+                while cap.isOpened():
+                    ret, frame = cap.read()
+                    if not ret or frame_count > 150:
+                        break
+                    result = model(frame, verbose=False)[0]
+                    boxes = result.boxes
+                    persons = sum(1 for i in range(len(boxes.cls)) if int(boxes.cls[i]) == 0)
+                    data.append({"Frame": frame_count, "Personas Detectadas": persons})
+                    frame_count += 1
+                cap.release()
 
             df = pd.DataFrame(data)
-            st.dataframe(df)
-            st.plotly_chart(px.line(df, x="Frame", y="Personas Detectadas", title="Conteo de personas por cuadro"))
+
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Frames Analizados", len(df))
+            col2.metric("Promedio", f"{df['Personas Detectadas'].mean():.1f}")
+            col3.metric("Máximo", df['Personas Detectadas'].max())
+
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=df["Frame"], y=df["Personas Detectadas"],
+                mode="lines+markers", name="Personas", line=dict(color="#00bcd4")
+            ))
+            fig.add_hline(
+                y=10, line_dash="dash", line_color="red",
+                annotation_text="Aforo máximo", annotation_position="top left"
+            )
+            fig.update_layout(
+                title="Conteo de personas por cuadro",
+                xaxis_title="Frame", yaxis_title="Cantidad",
+                plot_bgcolor="#0A0A1E", paper_bgcolor="#0A0A1E",
+                font=dict(color="#E0E0E0")
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+            st.subheader("Detalle de Datos")
+            st.dataframe(df.style.highlight_max(axis=0, color="lightgreen"), use_container_width=True)
 
     def settings_section():
-        st.title("Configuración")
-        st.markdown("Espacio reservado para ajustes futuros.")
+        st.title("⚙️ Configuración")
+        st.markdown("Espacio reservado para ajustes avanzados y personalización futura del sistema.")
 
+    # Ruteo final de navegación
     if selected == "Predicción de Demanda":
         predict_demand_section()
     elif selected == "Análisis de Archivos":
