@@ -1,4 +1,2 @@
 [compatibility]
-# Establece la versión de Python. 3.9 o 3.10 suelen ser muy estables.
-# Si 3.9 no funciona, prueba con 3.10.
 python_version = 3.9
