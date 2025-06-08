@@ -129,7 +129,7 @@ else:
                 st.plotly_chart(px.box(df, y=col))
                 def image_analysis_section():
                 st.title("🖼 Análisis de Imágenes con IA")
-        st.markdown("Suba una imagen y detecte automáticamente objetos relevantes para su negocio usando modelos de visión por computadora.")
+                st.markdown("Suba una imagen y detecte automáticamente objetos relevantes para su negocio usando modelos de visión por computadora.")
 
         modelo = st.radio("Modelo de detección", ["YOLOv8 General", "YOLO-World"])
         objetos_por_defecto = "strawberry, grape, banana, empanada, pizza, plate, knife, fork" if st.session_state.business_type == "Restaurante" else "face mask, syringe, medical gloves, thermometer, hospital bed"
