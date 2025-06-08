@@ -6,7 +6,21 @@ from streamlit_option_menu import option_menu
 import plotly.express as px
 from ultralytics import YOLO
 from PIL import Image
+import json
+import os
+import cv2
+import tempfile
+import plotly.graph_objects as go
 
+# --- Nuevas importaciones para dibujar zonas y stream en tiempo real ---
+from streamlit_drawable_canvas import st_canvas
+from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, ClientSettings
+import av # Necesario para streamlit-webrtc
+
+# --- Importamos las funciones auxiliares de video_utils.py ---
+from video_utils import VideoProcessor, process_video_file, load_zones, save_zones, CONFIG_ZONES_FILE
+
+# --- Configuración de página y estilos (sin cambios) ---
 st.set_page_config(page_title="Herramientas Inteligentes", layout="wide")
 
 st.markdown("""
@@ -34,6 +48,7 @@ LABEL_TRANSLATIONS = {
     'fresa': 'Fresa', 'uva': 'Uva', 'plato': 'Plato', 'vaso': 'Vaso'
 }
 
+# --- Lógica de selección de tipo de negocio (sin cambios) ---
 if 'business_type' not in st.session_state:
     st.session_state.business_type = None
 
@@ -75,6 +90,7 @@ else:
             }
         )
 
+    # --- Funciones de sección (sin cambios en las primeras) ---
     def predict_demand_section():
         st.title("📈 Predicción de demanda")
         st.markdown("Suba un archivo CSV con columnas `fecha`, `elemento`, `cantidad`. Se proyectará la demanda futura de un producto.")
@@ -128,7 +144,6 @@ else:
                 st.plotly_chart(px.histogram(df, x=col, nbins=30))
                 st.plotly_chart(px.box(df, y=col))
 
-    # La función image_analysis_section ha sido dedentada para estar al mismo nivel que las otras.
     def image_analysis_section():
         st.title("🖼 Análisis de imágenes con IA")
         st.markdown("Suba una imagen y detecte automáticamente objetos relevantes para su negocio usando modelos de visión por computadora.")
@@ -180,68 +195,176 @@ else:
             else:
                 st.info("No se detectaron objetos en la imagen.")
 
+    # --- Nueva función para la CONFIGURACIÓN DE ZONAS en la sección de Configuración ---
+    def configure_zones_section():
+        st.subheader("Zonas de Análisis de Vídeo")
+        st.markdown("Define las áreas (mesas, zonas de espera, etc.) en tu espacio para el análisis de vídeo inteligente.")
+        st.warning("Sube una imagen de referencia clara (sin personas) para delimitar las zonas. Esta configuración afectará a la sección 'Análisis de Vídeo'.")
+
+        uploaded_img = st.file_uploader("Sube una imagen de referencia (JPG o PNG)", type=["jpg", "jpeg", "png"])
+        
+        drawing_mode = st.selectbox(
+            "Modo de dibujo:",
+            ("polygon", "rect"),
+            index=0 # Default to polygon
+        )
+
+        stroke_width = st.slider("Grosor del borde", 1, 10, 2)
+        stroke_color = st.color_picker("Color del borde", "#00BCD4")
+        bg_color = st.color_picker("Color de relleno (transparente)", "#00BCD4") # Transparent color for fill
+
+        canvas_result = None
+        if uploaded_img is not None:
+            # Display image and canvas
+            img_data = uploaded_img.getvalue()
+            st.image(img_data, caption="Imagen de Referencia", use_container_width=True)
+
+            canvas_result = st_canvas(
+                fill_color=bg_color + "30", # Add transparency to fill color
+                stroke_width=stroke_width,
+                stroke_color=stroke_color,
+                background_image=Image.open(uploaded_img),
+                update_streamlit=True,
+                height=400,
+                drawing_mode=drawing_mode,
+                key="canvas",
+            )
+
+        if canvas_result and canvas_result.json_data is not None:
+            objects = pd.json_normalize(canvas_result.json_data["objects"])
+            
+            # Allow user to name each object
+            current_zones = []
+            st.subheader("Nombra tus zonas:")
+            for i, obj in objects.iterrows():
+                if obj['type'] in ['rect', 'polygon']:
+                    default_name = f"Zona {i+1}"
+                    if 'label' in obj and obj['label']: # If a label was previously set
+                        default_name = obj['label']
+
+                    zone_name = st.text_input(f"Nombre para la {obj['type']} {i+1}:", value=default_name, key=f"zone_name_{i}")
+                    
+                    # Store coordinates based on type
+                    if obj['type'] == 'rect':
+                        # Rectangles have left, top, width, height
+                        coords = [
+                            [obj['left'], obj['top']],
+                            [obj['left'] + obj['width'], obj['top']],
+                            [obj['left'] + obj['width'], obj['top'] + obj['height']],
+                            [obj['left'], obj['top'] + obj['height']]
+                        ]
+                    elif obj['type'] == 'polygon':
+                        # Polygons have path
+                        coords = [[p[0], p[1]] for p in obj['path']] # path is list of [x,y] points
+
+                    current_zones.append({"name": zone_name, "coords": coords})
+            
+            st.session_state['current_configured_zones'] = current_zones
+
+            if st.button("Guardar Configuración de Zonas"):
+                save_zones(current_zones)
+                st.success("Configuración de zonas guardada exitosamente.")
+                st.rerun() # Rerun to clear canvas if desired, or just to show success
+
+        # Display saved zones if any
+        loaded_zones = load_zones()
+        if loaded_zones:
+            st.subheader("Zonas configuradas actualmente:")
+            for zone in loaded_zones:
+                st.write(f"- **{zone['name']}** (Puntos: {len(zone['coords'])})")
+        else:
+            st.info("No hay zonas configuradas. ¡Empieza a dibujar!")
+
+
+    # --- Sección de Análisis de Vídeo (Actualizada) ---
     def video_analysis_section():
-        st.title("🎥 Análisis de vídeo con detección de personas")
-        st.markdown("Suba un vídeo corto. El sistema analizará cuántas personas aparecen por cuadro.")
+        st.title("🎥 Análisis de vídeo inteligente")
+        st.markdown("Analiza la ocupación de mesas o el conteo de personas, ya sea desde un vídeo grabado o en tiempo real.")
 
-        video_file = st.file_uploader("Seleccione un vídeo (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
-        if video_file:
-            import tempfile
-            import cv2
-            import plotly.graph_objects as go
+        # Selector de modalidad: Archivo vs. Tiempo Real
+        mode = st.radio(
+            "Seleccione el modo de análisis de vídeo:",
+            ("Cargar Archivo de Vídeo", "Stream en Tiempo Real"),
+            horizontal=True
+        )
 
-            temp = tempfile.NamedTemporaryFile(delete=False)
-            temp.write(video_file.read())
-            cap = cv2.VideoCapture(temp.name)
+        zones_configured = load_zones()
+        if not zones_configured and (mode == "Cargar Archivo de Vídeo" or mode == "Stream en Tiempo Real"):
+            st.warning("¡Atención! No se han configurado zonas de análisis. Por favor, vaya a la sección 'Configuración' para definirlas.")
+            st.info("Sin zonas configuradas, el análisis de vídeo solo mostrará la detección global de personas (como antes).")
+            # Clear people_in_zones dashboard if no zones are loaded
+            if 'realtime_people_data' in st.session_state:
+                del st.session_state['realtime_people_data']
 
-            model = YOLO("yolov8n.pt")
-            frame_count = 0
-            data = []
 
-            with st.spinner("Analizando vídeo..."):
-                while cap.isOpened():
-                    ret, frame = cap.read()
-                    if not ret or frame_count > 150:
-                        break
-                    result = model(frame, verbose=False)[0]
-                    boxes = result.boxes
-                    persons = sum(1 for i in range(len(boxes.cls)) if int(boxes.cls[i]) == 0)
-                    data.append({"Frame": frame_count, "Personas Detectadas": persons})
-                    frame_count += 1
-                cap.release()
+        if mode == "Cargar Archivo de Vídeo":
+            st.subheader("Análisis de Vídeo Grabado")
+            st.markdown("Suba un vídeo corto para analizar el conteo de personas y la ocupación de mesas.")
 
-            df = pd.DataFrame(data)
+            video_file = st.file_uploader("Seleccione un vídeo (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
+            if video_file:
+                # El código de procesamiento de archivo se adapta para usar las zonas
+                process_video_file(video_file, zones_configured)
 
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Frames Analizados", len(df))
-            col2.metric("Promedio", f"{df['Personas Detectadas'].mean():.1f}")
-            col3.metric("Máximo", df['Personas Detectadas'].max())
+        elif mode == "Stream en Tiempo Real":
+            st.subheader("Análisis de Vídeo en Tiempo Real (Cámara)")
+            st.markdown("Conéctate a una cámara en vivo para monitorear la ocupación de mesas o el flujo de personas en tiempo real.")
 
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=df["Frame"], y=df["Personas Detectadas"],
-                mode="lines+markers", name="Personas", line=dict(color="#00bcd4")
-            ))
-            fig.add_hline(
-                y=10, line_dash="dash", line_color="red",
-                annotation_text="Aforo máximo", annotation_position="top left"
-            )
-            fig.update_layout(
-                title="Conteo de personas por cuadro",
-                xaxis_title="Frame", yaxis_title="Cantidad",
-                plot_bgcolor="#0A0A1E", paper_bgcolor="#0A0A1E",
-                font=dict(color="#E0E0E0")
+            # Placeholder para mostrar el dashboard de ocupación en tiempo real
+            st.session_state['dashboard_placeholder'] = st.empty()
+
+            # Configuración de cliente para webrtc (puedes ajustar si necesitas STUN/TURN servers)
+            client_settings = ClientSettings(
+                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+                media_stream_constraints={"video": True, "audio": False},
             )
 
-            st.plotly_chart(fig, use_container_width=True)
-            st.subheader("Detalle de Datos")
-            st.dataframe(df.style.highlight_max(axis=0, color="lightgreen"), use_container_width=True)
+            # --- Conexión al stream en tiempo real ---
+            webrtc_ctx = webrtc_streamer(
+                key="realtime_video_stream",
+                video_processor_factory=VideoProcessor,
+                client_settings=client_settings,
+                async_processing=True, # Procesa frames en un hilo separado
+            )
+            
+            # Si el stream está activo, mostrar el dashboard
+            if webrtc_ctx.video_processor:
+                # Update the dashboard in a loop. st.empty() is key here.
+                with st.session_state['dashboard_placeholder'].container():
+                    st.subheader("Ocupación de Mesas (Tiempo Real)")
+                    if 'realtime_people_data' in st.session_state and st.session_state['realtime_people_data']:
+                        # Asegúrate de que los datos de realtime_people_data sean consistentes
+                        # Convertir a DataFrame solo si hay datos válidos
+                        if isinstance(st.session_state['realtime_people_data'], dict):
+                            realtime_df = pd.DataFrame(st.session_state['realtime_people_data'].items(), columns=["Zona", "Personas"])
+                            realtime_df = realtime_df.sort_values(by="Personas", ascending=False)
+                            
+                            cols_metrics = st.columns(len(realtime_df))
+                            for i, row in realtime_df.iterrows():
+                                # Usar floor division para evitar IndexError si hay menos de 3 columnas
+                                cols_metrics[i % 3].metric(f"{row['Zona']}", f"{row['Personas']} personas")
 
+                            st.dataframe(realtime_df, use_container_width=True)
+                        else:
+                            st.info("Esperando datos válidos del stream...")
+                    else:
+                        st.info("Esperando datos del stream...")
+            elif 'realtime_people_data' in st.session_state:
+                del st.session_state['realtime_people_data'] # Clear data if stream is off
+
+    # --- Sección de Configuración (Actualizada para incluir Configuración de Zonas) ---
     def settings_section():
         st.title("⚙️ Configuración")
-        st.markdown("Aquí podrá personalizar ajustes generales de la plataforma en futuras versiones.")
+        st.markdown("Aquí podrá personalizar ajustes generales de la plataforma.")
 
-    # Ruteo final de herramientas
+        st.subheader("Ajustes del Negocio")
+        # Aquí puedes añadir cualquier otro ajuste de configuración general en el futuro.
+        # Por ejemplo, umbrales, nombres por defecto, etc.
+
+        st.markdown("---") # Separador visual
+        configure_zones_section() # ¡Nueva sección para configurar las zonas!
+
+    # --- Ruteo final de herramientas (sin cambios) ---
     if selected == "Predicción de demanda":
         predict_demand_section()
     elif selected == "Análisis de archivos":
@@ -252,4 +375,4 @@ else:
         video_analysis_section()
     elif selected == "Configuración":
         settings_section()
-            
+
