@@ -1,15 +1,4 @@
-[theme]
-base="light"
-primaryColor="#1f77b4"
-secondaryBackgroundColor="#f0f2f6"
-font="sans serif"
-
-[server]
-headless = true
-enableCORS = false
-port = 8501
-enableXsrfProtection = false
-
-[client]
-showSidebarNavigation = true
-toolbarMode = "minimal"
+[compatibility]
+# Establece la versión de Python. 3.9 o 3.10 suelen ser muy estables.
+# Si 3.9 no funciona, prueba con 3.10.
+python_version = 3.9
