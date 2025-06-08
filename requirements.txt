@@ -4,6 +4,7 @@ pandas
 numpy
 plotly
 streamlit-option-menu
+streamlit_drawable_canvas
 
 # YOLO and its dependencies
 ultralytics
