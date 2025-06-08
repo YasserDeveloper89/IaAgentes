@@ -242,13 +242,13 @@ else:
         st.markdown("Aquí podrá personalizar ajustes generales de la plataforma en futuras versiones.")
 
     # Ruteo final de herramientas
-    if selected == "Predicción de Demanda":
+    if selected == "Predicción de demanda":
         predict_demand_section()
-    elif selected == "Análisis de Archivos":
+    elif selected == "Análisis de archivos":
         file_analysis_section()
-    elif selected == "Análisis de Imágenes":
+    elif selected == "Análisis de imágenes":
         image_analysis_section()
-    elif selected == "Análisis de Vídeo":
+    elif selected == "Análisis de vídeo":
         video_analysis_section()
     elif selected == "Configuración":
         settings_section()
