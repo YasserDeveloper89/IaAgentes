@@ -41,10 +41,10 @@ LABEL_TRANSLATIONS = {
 if 'business_type' not in st.session_state:
     st.session_state.business_type = None
 
-business_options = {{
+business_options = {
     "Restaurante": "🍽️ Soluciones para la gestión culinaria y de clientes.",
     "Clínica": "🏥 Optimización de procesos sanitarios y atención al paciente."
-}}
+}
 
 if st.session_state.business_type is None:
     st.title("Bienvenido a la Plataforma de IA Corporativa")
