@@ -127,7 +127,7 @@ else:
         st.title("Análisis de Imágenes")
         modelo = st.radio("Modelo de detección", ["YOLOv8 General", "YOLO-World"])
 
-        objetos_por_defecto = "strawberry, grape, banana, empanada, pizza, plate, knife, fork" if st.session_state.business_type == "Restaurante" else "face mask, syringe, medical gloves, thermometer, hospital bed"
+        objetos_por_defecto = "strawberry, grape, banana, empanada, pie, pizza, plate, knife, fork" if st.session_state.business_type == "Restaurante" else "face mask, syringe, medical gloves, thermometer, hospital bed"
         objetos = st.text_input("Objetos personalizados (solo YOLO-World)", value=objetos_por_defecto)
 
         archivo = st.file_uploader("Cargue una imagen (jpg/png)", type=["jpg", "jpeg", "png"])
