@@ -114,13 +114,99 @@ with st.sidebar:
 
 # --- FUNCIONES ---
 
+# Diccionario para traducir las etiquetas de YOLOv8 a español
+# Puedes añadir más traducciones aquí según las clases que detecte tu modelo
+LABEL_TRANSLATIONS = {
+    'person': 'Persona',
+    'bicycle': 'Bicicleta',
+    'car': 'Coche',
+    'motorcycle': 'Motocicleta',
+    'airplane': 'Avión',
+    'bus': 'Autobús',
+    'train': 'Tren',
+    'truck': 'Camión',
+    'boat': 'Barco',
+    'traffic light': 'Semáforo',
+    'fire hydrant': 'Boca de Incendios',
+    'stop sign': 'Señal de Stop',
+    'parking meter': 'Parquímetro',
+    'bench': 'Banco',
+    'bird': 'Pájaro',
+    'cat': 'Gato',
+    'dog': 'Perro',
+    'horse': 'Caballo',
+    'sheep': 'Oveja',
+    'cow': 'Vaca',
+    'elephant': 'Elefante',
+    'bear': 'Oso',
+    'zebra': 'Cebra',
+    'giraffe': 'Jirafa',
+    'backpack': 'Mochila',
+    'umbrella': 'Paraguas',
+    'handbag': 'Bolso',
+    'tie': 'Corbata',
+    'suitcase': 'Maleta',
+    'frisbee': 'Frisbee',
+    'skis': 'Esquís',
+    'snowboard': 'Tabla de Snow',
+    'sports ball': 'Pelota de Deporte',
+    'kite': 'Cometa',
+    'baseball bat': 'Bate de Béisbol',
+    'baseball glove': 'Guante de Béisbol',
+    'skateboard': 'Monopatín',
+    'surfboard': 'Tabla de Surf',
+    'tennis racket': 'Raqueta de Tenis',
+    'bottle': 'Botella',
+    'wine glass': 'Copa de Vino',
+    'cup': 'Taza',
+    'fork': 'Tenedor',
+    'knife': 'Cuchillo',
+    'spoon': 'Cuchara',
+    'bowl': 'Cuenco',
+    'banana': 'Plátano',
+    'apple': 'Manzana',
+    'sandwich': 'Sándwich',
+    'orange': 'Naranja',
+    'broccoli': 'Brócoli',
+    'carrot': 'Zanahoria',
+    'hot dog': 'Perrito Caliente',
+    'pizza': 'Pizza',
+    'donut': 'Dona',
+    'cake': 'Tarta',
+    'chair': 'Silla',
+    'couch': 'Sofá',
+    'potted plant': 'Planta en Maceta',
+    'bed': 'Cama',
+    'dining table': 'Mesa de Comedor',
+    'toilet': 'Inodoro',
+    'tv': 'Televisión',
+    'laptop': 'Portátil',
+    'mouse': 'Ratón',
+    'remote': 'Mando a Distancia',
+    'keyboard': 'Teclado',
+    'cell phone': 'Teléfono Móvil',
+    'microwave': 'Microondas',
+    'oven': 'Horno',
+    'toaster': 'Tostadora',
+    'sink': 'Fregadero',
+    'refrigerator': 'Refrigerador',
+    'book': 'Libro',
+    'clock': 'Reloj',
+    'vase': 'Jarrón',
+    'scissors': 'Tijeras',
+    'teddy bear': 'Oso de Peluche',
+    'hair drier': 'Secador de Pelo',
+    'toothbrush': 'Cepillo de Dientes'
+}
+
+
 def predict_demand_section():
     st.title("📊 Predicción de Demanda")
     st.markdown("""
     Esta herramienta te permite pronosticar la demanda futura de tus productos basándose en datos históricos.
     Por favor, sube un archivo CSV con las siguientes columnas:
 
-    - 📅 **fecha** (formato: YYYY-MM-DD)  
+    - 📅 **fecha** (formato:YYYY-MM-DD)  
     - ☕️ **producto** (nombre del producto, por ejemplo: "Café", "Té", "Pastel")  
     - 🔢 **cantidad** (unidades vendidas o demandadas)
 
@@ -213,7 +299,7 @@ def predict_demand_section():
                 fig.add_vline(x=last_historical_date, line_width=2, line_dash="dash", line_color="grey", 
                               annotation_text="Inicio del Pronóstico", annotation_position="top right")
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True) # <-- CORRECCIÓN: use_container_width
             
             st.markdown("### 📋 Tabla Detallada del Pronóstico")
             # Presenta la tabla de pronóstico con un formato más amigable
@@ -264,7 +350,7 @@ def file_analysis_section():
                     font=dict(family=FONT_FAMILY),
                     margin=dict(l=0, r=0, t=50, b=0)
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True) # <-- CORRECCIÓN: use_container_width
 
                 # Gráfico de caja para outliers
                 st.subheader(f"📦 Detección de Valores Atípicos para '{col_sel}'")
@@ -278,7 +364,7 @@ def file_analysis_section():
                     font=dict(family=FONT_FAMILY),
                     margin=dict(l=0, r=0, t=50, b=0)
                 )
-                st.plotly_chart(fig_box, use_container_width=True)
+                st.plotly_chart(fig_box, use_container_width=True) # <-- CORRECCIÓN: use_container_width
 
             else:
                 st.info("ℹ️ No se encontraron columnas numéricas en el archivo para generar gráficos de distribución.")
@@ -303,7 +389,7 @@ def image_analysis_section():
             st.info("✅ Imagen subida. Procesando...") # Mensaje de depuración
             img_bytes = uploaded_file.read()
             img = Image.open(io.BytesIO(img_bytes))
-            st.image(img, caption="Imagen Original Cargada", use_column_width=True)
+            st.image(img, caption="Imagen Original Cargada", use_container_width=True) # <-- CORRECCIÓN: use_container_width
             
             st.info("⚙️ Cargando el modelo de detección de objetos (YOLOv8n)...") # Mensaje de depuración
             model = YOLO('yolov8n.pt')  # El modelo se descargará si no está en caché
@@ -316,7 +402,7 @@ def image_analysis_section():
             st.subheader("🖼️ Imagen con Objetos Detectados")
             # results[0].plot() devuelve una imagen de NumPy con las cajas y etiquetas dibujadas
             res_img_array = results[0].plot() # Esto es un array de NumPy
-            st.image(res_img_array, caption="Objetos Detectados por la IA", use_column_width=True)
+            st.image(res_img_array, caption="Objetos Detectados por la IA", use_container_width=True) # <-- CORRECCIÓN: use_container_width
             
             st.markdown("### 📋 Detalles de los Objetos Detectados")
             detections = results[0].boxes.data.cpu().numpy() if results[0].boxes is not None else []
@@ -327,8 +413,11 @@ def image_analysis_section():
                 for box in detections:
                     # Coordenadas de la caja y puntuación de confianza
                     x1, y1, x2, y2, score, class_id = box
+                    original_label = labels[int(class_id)]
+                    translated_label = LABEL_TRANSLATIONS.get(original_label, original_label) # Traduce la etiqueta
+                    
                     data.append({
-                        "Etiqueta de Objeto": labels[int(class_id)],
+                        "Etiqueta de Objeto": translated_label, # <-- ETIQUETA TRADUCIDA
                         "Confianza (%)": f"{round(score * 100, 2)}%", # Formateado como porcentaje
                         "Coordenadas de la Caja": f"[{int(x1)}, {int(y1)}, {int(x2)}, {int(y2)}]" # Formato [x1, y1, x2, y2]
                         # "Área de la Caja (px)": f"{(int(x2)-int(x1)) * (int(y2)-int(y1))} px²" # Podrías añadir el área si es relevante
@@ -359,12 +448,4 @@ def settings_section():
 # --- RUTEO DE SECCIONES ---
 if selected == "Predicción Demanda":
     predict_demand_section()
-elif selected == "Análisis Archivos":
-    file_analysis_section()
-elif selected == "Análisis de Imágenes":
-    image_analysis_section()
-elif selected == "Configuración":
-    settings_section()
-else:
-    st.write("Selecciona una opción del menú para comenzar.")
-
+elif selected =
