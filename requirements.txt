@@ -8,3 +8,6 @@ opencv-python
 Pillow
 open-clip-torch
 git+https://github.com/openai/CLIP.git
+streamlit-drawable-canvas
+streamlit-webrtc
+av
