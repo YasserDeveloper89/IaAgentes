@@ -128,7 +128,7 @@ else:
                 st.plotly_chart(px.histogram(df, x=col, nbins=30))
                 st.plotly_chart(px.box(df, y=col))
                 def image_analysis_section():
-        st.title("🖼 Análisis de Imágenes con IA")
+                st.title("🖼 Análisis de Imágenes con IA")
         st.markdown("Suba una imagen y detecte automáticamente objetos relevantes para su negocio usando modelos de visión por computadora.")
 
         modelo = st.radio("Modelo de detección", ["YOLOv8 General", "YOLO-World"])
