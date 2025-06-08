@@ -33,8 +33,8 @@ st.markdown("""
 
 LABEL_TRANSLATIONS = {
     'person': 'Persona', 'bottle': 'Botella', 'cup': 'Taza',
-    'jeringa': 'Jeringa', 'mascarilla': 'Mascarilla', 'guantes medicos': 'Guantes Médicos',
-    'fresa': 'Fresa', 'uva': 'Uva', 'plato': 'Plato', 'vaso': 'Vaso'
+    'syringe': 'Jeringa', 'mask': 'Mascarilla', 'gloves': 'Guantes Médicos',
+    'strawberry': 'Fresa', 'grape': 'Uva', 'dish': 'Plato', 'glass': 'Vaso'
 }
 
 # Lógica de selección del negocio
@@ -42,7 +42,7 @@ if 'business_type' not in st.session_state:
     st.session_state.business_type = None
 
 if st.session_state.business_type is None:
-    st.title("Plataforma de Herramientas Inteligentes para Restaurantes y Clínicas")
+    st.title("Plataforma de herramientas inteligentes para restaurantes y clínicas")
     st.markdown("Seleccione el tipo de negocio para comenzar a utilizar las herramientas disponibles.")
     col1, col2 = st.columns(2)
     with col1:
@@ -145,7 +145,7 @@ else:
                     return
 
             resultado = modelo_yolo(imagen)[0]
-            st.image(resultado.plot(), caption="Resultado", use_container_width=True)
+            st.image(resultado.plot(), caption="Resultado del análisis", use_container_width=True)
 
             cajas = resultado.boxes.data.cpu().numpy()
             nombres = resultado.names
