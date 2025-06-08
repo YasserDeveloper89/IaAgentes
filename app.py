@@ -61,7 +61,7 @@ else:
 
     with st.sidebar:
         selected = option_menu(
-            menu_title="Herramientas de IA",
+            menu_title="Herramientas",
             options=["Predicción de Demanda", "Análisis de Archivos", "Análisis de Imágenes", "Configuración"],
             icons=["bar-chart-line", "file-earmark-text", "image", "gear"],
             default_index=0,
