@@ -1,19 +1,14 @@
-# Core Streamlit and data science libraries
-streamlit
-pandas
-numpy
-plotly
-streamlit-option-menu
-streamlit_drawable_canvas
-
-# YOLO and its dependencies
-ultralytics
-opencv-python
-Pillow
-
-# CLIP-related for YOLO-World (prioritize PyPI version)
-open-clip-torch
-
-# Streamlit-webrtc and its video backend
-streamlit-webrtc
-av
+streamlit==1.36.0
+pandas==2.2.2
+numpy==1.26.4
+plotly==5.22.0
+streamlit-option-menu==0.3.6
+ultralytics==8.2.35
+opencv-python==4.9.0.84
+Pillow==10.3.0
+# open-clip-torch # Comentamos por ahora para simplificar, si no usas YOLO-World no es estrictamente necesario al principio
+# Si sigues necesitando YOLO-World con esta config, descomenta y prueba de nuevo
+# git+https://github.com/openai/CLIP.git # Definitivamente evitar instalaciones directas de git si es posible
+streamlit-drawable-canvas==0.9.3
+streamlit-webrtc==0.48.0
+av==12.1.0 # ¡Esta es crucial para streamlit-webrtc! Aseguramos una versión compatible
