@@ -24,20 +24,31 @@ st.set_page_config(
     page_icon="✨"
 )
 
+# Estilos CSS
 st.markdown(f"""
-<style>
-/* Aquí va tu CSS completo como el original */
-body {{ background-color: {BACKGROUND_COLOR}; color: {TEXT_COLOR}; }}
-</style>
+    <style>
+        .stApp {{
+            background-color: {BACKGROUND_COLOR};
+            color: {TEXT_COLOR};
+            font-family: {FONT_FAMILY};
+        }}
+        .stSidebar {{
+            background-color: #1A1A30;
+        }}
+        h1, h2, h3 {{
+            color: {PRIMARY_COLOR_FUTURISTIC};
+        }}
+    </style>
 """, unsafe_allow_html=True)
 
+# Traducciones para detecciones con YOLO
 LABEL_TRANSLATIONS = {
-    'person': 'Persona', 'bottle': 'Botella', 'cup': 'Taza', 'chair': 'Silla',
+    'person': 'Persona', 'bottle': 'Botella', 'cup': 'Taza',
     'jeringa': 'Jeringa', 'mascarilla': 'Mascarilla', 'guantes medicos': 'Guantes Médicos',
     'fresa': 'Fresa', 'uva': 'Uva', 'plato': 'Plato', 'vaso': 'Vaso'
 }
 
-# --- SELECCIÓN DEL TIPO DE NEGOCIO ---
+# Selección del tipo de negocio
 if 'business_type' not in st.session_state:
     st.session_state.business_type = None
 
@@ -49,7 +60,6 @@ business_options = {
 if st.session_state.business_type is None:
     st.title("Bienvenido a la Plataforma de IA Corporativa")
     st.markdown("Selecciona tu tipo de negocio para personalizar la experiencia.")
-
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Soy un Restaurante"):
@@ -71,32 +81,45 @@ else:
             options=["Predicción Demanda", "Análisis Archivos", "Análisis de Imágenes", "Configuración"],
             icons=["bar-chart-line", "file-earmark-text", "image", "gear"],
             default_index=0,
-            styles={{"icon": {{"color": PRIMARY_COLOR_FUTURISTIC}}}}
-)
-        # --- Funciones de las herramientas (deben ir antes del ruteo del menú) ---
+            styles={
+                "container": {"padding": "5px", "background-color": "#1A1A30"},
+                "icon": {"color": PRIMARY_COLOR_FUTURISTIC, "font-size": "20px"},
+                "nav-link": {"font-size": "16px", "text-align": "left", "color": TEXT_COLOR},
+                "nav-link-selected": {"background-color": PRIMARY_COLOR_FUTURISTIC, "color": "#FFFFFF"},
+            }
+        )
+        # --- Herramientas de la plataforma ---
 
 def predict_demand_section():
     st.title("📊 Predicción de Demanda")
     uploaded_file = st.file_uploader("Sube CSV con columnas: fecha, elemento, cantidad", type=["csv"])
     if uploaded_file:
-        df = pd.read_csv(uploaded_file, parse_dates=["fecha"])
-        st.dataframe(df)
-        elementos = df["elemento"].unique()
-        selected_element = st.selectbox("Selecciona elemento", elementos)
-        df_elem = df[df["elemento"] == selected_element].sort_values("fecha")
-        window = st.slider("Ventana media móvil", 2, 10, 3)
-        growth = st.slider("Factor crecimiento", 1.0, 2.0, 1.05)
-        days = st.slider("Días a predecir", 1, 30, 7)
+        try:
+            df = pd.read_csv(uploaded_file, parse_dates=["fecha"])
+            if "elemento" not in df.columns or "cantidad" not in df.columns:
+                st.error("Tu archivo debe tener columnas: fecha, elemento, cantidad.")
+                return
+            st.dataframe(df)
+            elementos = df["elemento"].unique()
+            selected = st.selectbox("Selecciona elemento", elementos)
+            df_elem = df[df["elemento"] == selected].sort_values("fecha")
 
-        df_elem["media_movil"] = df_elem["cantidad"].rolling(window).mean()
-        last = df_elem["media_movil"].dropna().iloc[-1]
-        forecast = [round(last * (growth**i)) for i in range(1, days+1)]
-        fechas = [df_elem["fecha"].iloc[-1] + timedelta(days=i) for i in range(1, days+1)]
-        df_pred = pd.DataFrame({"fecha": fechas, "cantidad": forecast})
+            window = st.slider("Ventana media móvil", 2, 10, 3)
+            growth = st.slider("Crecimiento (%)", 0, 100, 5) / 100
+            days = st.slider("Días a predecir", 1, 30, 7)
 
-        fig = px.line(df_pred, x="fecha", y="cantidad", title="Predicción de Demanda")
-        st.plotly_chart(fig)
-        st.dataframe(df_pred)
+            df_elem["media_movil"] = df_elem["cantidad"].rolling(window).mean()
+            last_val = df_elem["media_movil"].dropna().iloc[-1] if not df_elem["media_movil"].dropna().empty else df_elem["cantidad"].mean()
+            forecast = [round(last_val * (1 + growth) ** i) for i in range(1, days + 1)]
+            fechas = [df_elem["fecha"].max() + timedelta(days=i) for i in range(1, days + 1)]
+            pred_df = pd.DataFrame({"fecha": fechas, "cantidad": forecast})
+
+            fig = px.line(pred_df, x="fecha", y="cantidad", title="Predicción de Demanda")
+            st.plotly_chart(fig)
+            st.dataframe(pred_df)
+
+        except Exception as e:
+            st.error(f"Error procesando archivo: {e}")
 
 def file_analysis_section():
     st.title("📂 Análisis de Archivos CSV")
@@ -107,42 +130,46 @@ def file_analysis_section():
         st.write("Estadísticas:", df.describe())
         num_cols = df.select_dtypes(include=np.number).columns
         if len(num_cols):
-            col = st.selectbox("Columna para histograma", num_cols)
+            col = st.selectbox("Columna numérica para analizar", num_cols)
             st.plotly_chart(px.histogram(df, x=col))
 
 def image_analysis_section():
     st.title("📸 Detección de Objetos en Imágenes")
-    model_type = st.radio("Tipo de modelo", ["YOLOv8 General", "YOLO-World"])
-    objects = st.text_input("Objetos personalizados (si usas YOLO-World)", "")
-    image = st.file_uploader("Sube una imagen", type=["jpg", "png", "jpeg"])
+    model_type = st.radio("Modelo", ["YOLOv8 General", "YOLO-World"])
+    objetos = st.text_input("Objetos personalizados (solo para YOLO-World)", "")
+    image = st.file_uploader("Sube imagen (JPG, PNG)", type=["jpg", "jpeg", "png"])
     if image:
         img = Image.open(image)
-        st.image(img, caption="Imagen subida", use_container_width=True)
+        st.image(img, caption="Imagen original", use_container_width=True)
         model = YOLO("yolov8n.pt" if model_type == "YOLOv8 General" else "yolov8s-world.pt")
-        if model_type == "YOLO-World" and objects:
-            model.set_classes([o.strip() for o in objects.split(",")])
+        if model_type == "YOLO-World" and objetos.strip():
+            model.set_classes([o.strip().lower() for o in objetos.split(",") if o.strip()])
         results = model(img)
-        st.image(results[0].plot(), caption="Resultado", use_container_width=True)
+        res_img = results[0].plot()
+        st.image(res_img, caption="Resultado IA", use_container_width=True)
 
-        boxes = results[0].boxes.data.cpu().numpy()
+        detections = results[0].boxes.data.cpu().numpy()
         labels = results[0].names
         data = []
-        for box in boxes:
+        for box in detections:
             x1, y1, x2, y2, score, cls = box
-            name = labels[int(cls)]
-            trad = LABEL_TRANSLATIONS.get(name.lower(), name)
+            etiqueta = labels[int(cls)]
+            traducida = LABEL_TRANSLATIONS.get(etiqueta.lower(), etiqueta)
             data.append({
-                "Objeto": trad,
-                "Confianza": f"{score:.2%}",
-                "Coordenadas": f"{int(x1)}, {int(y1)}, {int(x2)}, {int(y2)}"
+                "Objeto": traducida,
+                "Confianza": f"{score*100:.2f}%",
+                "Coordenadas": f"[{int(x1)}, {int(y1)}, {int(x2)}, {int(y2)}]"
             })
-        st.dataframe(pd.DataFrame(data))
+        if data:
+            st.dataframe(pd.DataFrame(data))
+        else:
+            st.info("No se detectaron objetos.")
 
 def settings_section():
     st.title("⚙️ Configuración")
-    st.info("Aquí se agregarán futuras configuraciones.")
+    st.info("Aquí podrás ajustar preferencias y configuraciones futuras.")
 
-# --- Ruteo de secciones ---
+# --- Ruteo según opción seleccionada ---
 if st.session_state.business_type:
     if selected == "Predicción Demanda":
         predict_demand_section()
