@@ -59,7 +59,8 @@ st.markdown(f"""
             font-family: var(--font-family);
             box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.5); /* Sombra para dar profundidad */
         }}
-        .st-emotion-cache-1d391kg .stButton>button {{ /* Botones en el sidebar (general) */
+        /* Estilo general para todos los botones de Streamlit */
+        .stButton>button {{
             background-color: var(--accent-color);
             color: white;
             border-radius: 8px;
@@ -67,8 +68,9 @@ st.markdown(f"""
             font-weight: bold;
             border: none;
             transition: background-color 0.3s ease, transform 0.2s ease;
+            cursor: pointer;
         }}
-        .st-emotion-cache-1d391kg .stButton>button:hover {{
+        .stButton>button:hover {{
             background-color: #E6007A; /* Tono más oscuro del acento al hover */
             transform: translateY(-2px);
         }}
@@ -231,8 +233,8 @@ st.markdown(f"""
 
 
 # --- Diccionario para traducir las etiquetas de YOLOv8 a español ---
-# Puedes añadir más traducciones aquí según las clases que detecte tu modelo
-# Este diccionario se usará para la tabla de detecciones
+# Este diccionario se usará para la tabla de detecciones.
+# Asegúrate de añadir aquí las clases específicas que quieras para YOLO-World y sus traducciones.
 LABEL_TRANSLATIONS = {
     'person': 'Persona', 'bicycle': 'Bicicleta', 'car': 'Coche', 'motorcycle': 'Motocicleta',
     'airplane': 'Avión', 'bus': 'Autobús', 'train': 'Tren', 'truck': 'Camión',
@@ -255,14 +257,14 @@ LABEL_TRANSLATIONS = {
     'sink': 'Fregadero', 'refrigerator': 'Refrigerador', 'book': 'Libro', 'clock': 'Reloj',
     'vase': 'Jarrón', 'scissors': 'Tijeras', 'teddy bear': 'Oso de Peluche',
     'hair drier': 'Secador de Pelo', 'toothbrush': 'Cepillo de Dientes',
-    # --- Añadir clases específicas para restaurantes y clínicas para YOLO-World ---
+    # --- Clases específicas para Restaurantes y Clínicas (ejemplos para YOLO-World) ---
     'fresa': 'Fresa', 'uva': 'Uva', 'kiwi': 'Kiwi', 'plato': 'Plato', 'cubierto': 'Cubierto',
     'bandeja': 'Bandeja', 'vaso': 'Vaso', 'comida': 'Comida', 'ingrediente': 'Ingrediente',
-    'salsa': 'Salsa', 'chef hat': 'Gorro de Chef', 'delantal': 'Delantal',
-    'jeringa': 'Jeringa', 'mascarilla': 'Mascarilla', 'guantes': 'Guantes Médicos',
+    'salsa': 'Salsa', 'chef hat': 'Gorro de Chef', 'delantal': 'Delantal', 'menu': 'Menú',
+    'jeringa': 'Jeringa', 'mascarilla': 'Mascarilla', 'guantes medicos': 'Guantes Médicos',
     'venda': 'Venda', 'estetoscopio': 'Estetoscopio', 'termometro': 'Termómetro',
     'medicamento': 'Medicamento', 'pastilla': 'Pastilla', 'instrumento quirurgico': 'Instrumento Quirúrgico',
-    'botiquin': 'Botiquín', 'equipo medico': 'Equipo Médico'
+    'botiquin': 'Botiquín', 'equipo medico': 'Equipo Médico', 'camilla': 'Camilla'
 }
 
 # --- SELECCIÓN DEL TIPO DE NEGOCIO (GLOBAL) ---
@@ -275,7 +277,7 @@ if st.session_state.business_type is None:
     st.title("Bienvenido a la Plataforma de IA Corporativa")
     st.markdown("""
         Esta plataforma está diseñada para potenciar tu negocio con herramientas avanzadas de Inteligencia Artificial.
-        Para ofrecerte una experiencia personalizada, por favor, selecciona el tipo de negocio que representas.
+        Para ofrecerte una experiencia personalizada y relevante, por favor, selecciona el tipo de negocio que representas.
     """)
     business_options = {
         "Restaurante": "🍽️ Soluciones para la gestión culinaria y de clientes.",
@@ -283,18 +285,18 @@ if st.session_state.business_type is None:
     }
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Soy un Restaurante", use_container_width=True):
+        if st.button("Soy un Restaurante", key="btn_restaurant", use_container_width=True):
             st.session_state.business_type = "Restaurante"
             st.rerun() # Reruns the app to apply changes
     with col2:
-        if st.button("Soy una Clínica", use_container_width=True):
+        if st.button("Soy una Clínica", key="btn_clinic", use_container_width=True):
             st.session_state.business_type = "Clínica"
             st.rerun() # Reruns the app to apply changes
     st.stop() # Detiene la ejecución hasta que se seleccione una opción
 
 # Una vez que se selecciona el tipo de negocio, se muestra la interfaz principal
 st.sidebar.title(f"Tipo de Negocio: {st.session_state.business_type} {business_options[st.session_state.business_type].split(' ')[0]}")
-if st.sidebar.button("Cambiar tipo de negocio", help="Vuelve a la pantalla de selección inicial"):
+if st.sidebar.button("Cambiar tipo de negocio", help="Vuelve a la pantalla de selección inicial", key="sidebar_change_type"):
     st.session_state.business_type = None
     st.rerun()
 
@@ -315,22 +317,19 @@ with st.sidebar:
         }
     )
 
-# --- Funciones de las secciones ---
-# Definiciones de las funciones (el contenido estará en la Parte 2)
+# --- Funciones de las secciones (definiciones sin contenido aún) ---
+# El contenido detallado se incluirá en la Parte 2
+
 def predict_demand_section():
-    # Contenido para la sección de Predicción de Demanda
     pass
 
 def file_analysis_section():
-    # Contenido para la sección de Análisis de Archivos
     pass
 
 def image_analysis_section():
-    # Contenido para la sección de Análisis de Imágenes
     pass
 
 def settings_section():
-    # Contenido para la sección de Configuración
     pass
 
 # --- RUTEO DE SECCIONES ---
@@ -345,6 +344,7 @@ elif selected == "Configuración":
     settings_section()
 else:
     st.write("Selecciona un módulo del menú para comenzar.")
+
 # --- Funciones de las secciones (Parte 2 del código) ---
 
 def predict_demand_section():
@@ -387,13 +387,22 @@ def predict_demand_section():
     if uploaded_file:
         try:
             df = pd.read_csv(uploaded_file, parse_dates=['fecha'])
-            df = df.sort_values(['elemento', 'fecha']) # Cambiado de 'producto' a 'elemento'
+            # Asegúrate de que la columna 'elemento' exista antes de usarla
+            if 'elemento' not in df.columns:
+                # Intenta renombrar 'producto' a 'elemento' si existe, para compatibilidad
+                if 'producto' in df.columns:
+                    df.rename(columns={'producto': 'elemento'}, inplace=True)
+                else:
+                    st.error("El archivo CSV debe contener las columnas 'fecha', 'elemento' y 'cantidad'.")
+                    return # Detener la ejecución si faltan columnas
+            
+            df = df.sort_values(['elemento', 'fecha'])
 
             st.subheader("✅ Datos históricos cargados correctamente")
             st.dataframe(df)
 
-            elementos = df['elemento'].unique() # Cambiado de 'productos' a 'elementos'
-            elemento_sel = st.selectbox("👉 Selecciona el elemento para el cual deseas predecir la demanda", elementos) # Cambiado de 'producto_sel'
+            elementos = df['elemento'].unique()
+            elemento_sel = st.selectbox("👉 Selecciona el elemento para el cual deseas predecir la demanda", elementos)
 
             df_elemento = df[df['elemento'] == elemento_sel].copy()
 
@@ -409,6 +418,10 @@ def predict_demand_section():
             else:
                 st.warning("No hay suficientes datos para calcular el promedio móvil. Ajusta la ventana o el dataset.")
                 last_avg = df_elemento['cantidad'].mean() if not df_elemento['cantidad'].empty else 0
+                if last_avg == 0:
+                    st.error("No hay datos de cantidad válidos para realizar una predicción.")
+                    return # Detener si no hay datos de cantidad
+
                 st.info(f"Usando el promedio simple de cantidad ({last_avg:.2f}) para la predicción debido a datos insuficientes para el promedio móvil.")
 
 
@@ -447,12 +460,11 @@ def predict_demand_section():
                 xaxis_title="Fecha",
                 yaxis_title="Cantidad de Unidades / Registros",
                 legend_title="Leyenda",
-                font=dict(family=FONT_FAMILY, color=TEXT_COLOR), # Asegurar color de fuente
+                font=dict(family=FONT_FAMILY, color=TEXT_COLOR),
                 margin=dict(l=0, r=0, t=50, b=0),
-                paper_bgcolor=BACKGROUND_COLOR, # Fondo del gráfico
-                plot_bgcolor='#1A1A30' # Fondo del área de la gráfica
+                paper_bgcolor=BACKGROUND_COLOR,
+                plot_bgcolor='#1A1A30'
             )
-            # Añadir línea vertical de inicio del pronóstico
             if not df_elemento.empty:
                 last_historical_date = df_elemento['fecha'].iloc[-1]
                 fig.add_vline(x=last_historical_date, line_width=2, line_dash="dash", line_color=SECONDARY_TEXT_COLOR, 
@@ -573,6 +585,7 @@ def image_analysis_section():
     model_choice = st.radio(
         "👉 Selecciona el tipo de modelo para la detección:",
         ('YOLOv8 General (objetos comunes)', 'YOLO-World (vocabulario abierto)'),
+        key="model_selection", # Añadir key para evitar DuplicateWidgetID
         help="YOLOv8 General es rápido y eficaz para objetos cotidianos (personas, coches). YOLO-World permite especificar objetos por texto (ej: instrumental médico, frutas específicas), pero puede ser más lento."
     )
 
@@ -580,14 +593,15 @@ def image_analysis_section():
     if model_choice == 'YOLO-World (vocabulario abierto)':
         default_classes_text = ""
         if business_type == "Restaurante":
-            default_classes_text = "fresa, uva, plátano, tomate, plato, cubierto, botella de vino, vaso"
+            default_classes_text = "fresa, uva, plátano, tomate, plato, cubierto, botella de vino, vaso, menú"
         elif business_type == "Clínica":
-            default_classes_text = "jeringa, mascarilla, guantes, estetoscopio, medicamento, termometro"
+            default_classes_text = "jeringa, mascarilla, guantes medicos, estetoscopio, medicamento, termometro, camilla, botiquin"
 
-        st.info(f"Para YOLO-World, especifica los objetos que deseas detectar, separados por comas. Ejemplos para {business_type}: {default_classes_text}")
+        st.info(f"Para YOLO-World, especifica los objetos que deseas detectar, separados por comas. Ejemplos para {business_type}: **{default_classes_text}**")
         custom_classes_input = st.text_input(
             "Objetos personalizados a detectar (ej: fresa, jeringa, botella de aceite):",
-            value=default_classes_text # Ejemplos por defecto basados en el tipo de negocio
+            value=default_classes_text,
+            key="custom_classes_input" # Añadir key
         )
         if custom_classes_input:
             custom_classes = [c.strip().lower() for c in custom_classes_input.split(',') if c.strip()]
@@ -597,7 +611,7 @@ def image_analysis_section():
             st.warning("Por favor, introduce al menos un objeto para que YOLO-World lo detecte.")
 
 
-    uploaded_file = st.file_uploader("Sube tu imagen aquí (formatos soportados: JPG, JPEG, PNG)", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Sube tu imagen aquí (formatos soportados: JPG, JPEG, PNG)", type=["jpg", "jpeg", "png"], key="image_uploader")
     if uploaded_file:
         try:
             st.info("✅ Imagen subida. Preparando para el análisis...")
@@ -612,11 +626,9 @@ def image_analysis_section():
                 st.info("✅ Modelo YOLOv8 General cargado.")
             elif model_choice == 'YOLO-World (vocabulario abierto)':
                 st.info("⚙️ Cargando el modelo de detección de objetos YOLO-World (vocabulario abierto)...")
-                model = YOLO('yolov8s-world.pt') # O 'yolov8m-world.pt' para más precisión
+                # Se usará yolov8s-world.pt que es un buen balance entre tamaño y capacidad
+                model = YOLO('yolov8s-world.pt') 
                 if custom_classes:
-                    # Filter custom_classes to only include those in LABEL_TRANSLATIONS keys or add new ones if not present
-                    # This ensures the model only tries to detect classes we have a translation for, or the original if not
-                    # No, actually YOLO-World can detect arbitrary classes, so we should just set them as is.
                     model.set_classes(custom_classes)
                     st.info(f"YOLO-World configurado para detectar: {', '.join(custom_classes)}.")
                 else:
@@ -642,8 +654,9 @@ def image_analysis_section():
                         x1, y1, x2, y2, score, class_id = box
                         original_label = labels[int(class_id)]
                         
-                        # Usa la etiqueta original de YOLO-World si es una clase personalizada, o la traducción si es una clase COCO
-                        # Asegúrate de que las clases personalizadas se pasen en minúsculas al diccionario de traducción
+                        # Usa la etiqueta original si es una clase personalizada que YOLO-World ha detectado,
+                        # o la traducción si es una clase COCO conocida.
+                        # Convertimos a minúsculas para la búsqueda en LABEL_TRANSLATIONS.
                         translated_label = LABEL_TRANSLATIONS.get(original_label.lower(), original_label)
                         
                         data.append({
@@ -661,7 +674,7 @@ def image_analysis_section():
             except Exception as e:
                 st.error(f"❌ Ocurrió un error inesperado al procesar la imagen: {e}")
                 st.error("Por favor, verifica el formato de la imagen, los objetos especificados para YOLO-World y los logs de la aplicación para más detalles.")
-        else:
+        else: # Este else corresponde al 'if uploaded_file:'
             st.info("⬆️ Sube una imagen para que la IA la analice y detecte objetos.")
 
 
@@ -672,5 +685,4 @@ def settings_section():
     Actualmente, no hay opciones de configuración disponibles para el usuario final.
     """)
     st.info("Próximamente: ¡Nuevas opciones de personalización y gestión de módulos aquí!")
-
 
