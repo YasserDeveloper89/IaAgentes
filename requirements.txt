@@ -1,18 +1,3 @@
-# Especificamos una versión de Python anterior, más estable en Streamlit Cloud
-# Crea un archivo .streamlit/config.toml con python_version = 3.9
-# O 3.10 si 3.9 da problemas.
-# Este archivo requirements.txt por sí solo no fuerza la versión de Python,
-# pero es una buena práctica para las versiones de librería.
-
 streamlit==1.36.0
 pandas==2.2.2
-# numpy==1.26.4
-# plotly==5.22.0
 streamlit-option-menu==0.3.6
-# ultralytics==8.2.35
-# Probamos con una versión de opencv-python ligeramente anterior y más estable
-# opencv-python==4.8.1.78
-# Pillow==10.3.0
-#streamlit-drawable-canvas==0.9.3
-#streamlit-webrtc==0.48.0
-#av==12.1.0
