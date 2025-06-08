@@ -38,7 +38,7 @@ if 'business_type' not in st.session_state:
     st.session_state.business_type = None
 
 if st.session_state.business_type is None:
-    st.title("Plataforma de Herramientas Inteligentes para Restaurantes y Clínicas")
+    st.title("Plataforma de Herramientas inteligentes para Restaurantes y Clínicas")
     st.markdown("Seleccione el tipo de negocio para comenzar a utilizar las herramientas disponibles.")
     col1, col2 = st.columns(2)
     with col1:
@@ -57,7 +57,7 @@ else:
 
     with st.sidebar:
         selected = option_menu(
-            menu_title="Herramientas de IA",
+            menu_title="Herramientas",
             options=[
                 "Predicción de demanda",
                 "Análisis de archivos",
