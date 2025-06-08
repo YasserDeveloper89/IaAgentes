@@ -1,13 +1,18 @@
+# Core Streamlit and data science libraries
 streamlit
 pandas
 numpy
 plotly
 streamlit-option-menu
+
+# YOLO and its dependencies
 ultralytics
 opencv-python
 Pillow
+
+# CLIP-related for YOLO-World (prioritize PyPI version)
 open-clip-torch
-git+https://github.com/openai/CLIP.git
-streamlit-drawable-canvas
+
+# Streamlit-webrtc and its video backend
 streamlit-webrtc
 av
