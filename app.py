@@ -448,4 +448,11 @@ def settings_section():
 # --- RUTEO DE SECCIONES ---
 if selected == "Predicción Demanda":
     predict_demand_section()
-elif selected =
+elif selected == "Análisis Archivos":
+    file_analysis_section()
+elif selected == "Análisis de Imágenes":
+    image_analysis_section()
+elif selected == "Configuración":
+    settings_section()
+else:
+    st.write("Selecciona una opción del menú para comenzar.")
