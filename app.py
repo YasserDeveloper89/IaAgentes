@@ -671,7 +671,7 @@ def image_analysis_section():
                 else:
                     st.info("😔 No se detectaron objetos significativos en la imagen con el modelo seleccionado. Intenta con otra imagen o ajusta los parámetros de detección.")
                     
-            except Exception as e:
+                except Exception as e:
                 st.error(f"❌ Ocurrió un error inesperado al procesar la imagen: {e}")
                 st.error("Por favor, verifica el formato de la imagen, los objetos especificados para YOLO-World y los logs de la aplicación para más detalles.")
         else: # Este else corresponde al 'if uploaded_file:'
