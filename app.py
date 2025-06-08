@@ -31,11 +31,11 @@ body {{ background-color: {BACKGROUND_COLOR}; color: {TEXT_COLOR}; }}
 </style>
 """, unsafe_allow_html=True)
 
-LABEL_TRANSLATIONS = {{
+LABEL_TRANSLATIONS = {
     'person': 'Persona', 'bottle': 'Botella', 'cup': 'Taza', 'chair': 'Silla',
     'jeringa': 'Jeringa', 'mascarilla': 'Mascarilla', 'guantes medicos': 'Guantes Médicos',
     'fresa': 'Fresa', 'uva': 'Uva', 'plato': 'Plato', 'vaso': 'Vaso'
-}}
+}
 
 # --- SELECCIÓN DEL TIPO DE NEGOCIO ---
 if 'business_type' not in st.session_state:
