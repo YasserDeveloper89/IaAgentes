@@ -36,20 +36,27 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Diccionario de etiquetas traducidas
-LABEL_TRANSLATIONS = {{
-    'person': 'Persona', 'bottle': 'Botella', 'cup': 'Taza',
-    'jeringa': 'Jeringa', 'mascarilla': 'Mascarilla', 'guantes medicos': 'Guantes Médicos',
-    'fresa': 'Fresa', 'uva': 'Uva', 'plato': 'Plato', 'vaso': 'Vaso'
-}}
+LABEL_TRANSLATIONS = {
+    'person': 'Persona',
+    'bottle': 'Botella',
+    'cup': 'Taza',
+    'jeringa': 'Jeringa',
+    'mascarilla': 'Mascarilla',
+    'guantes medicos': 'Guantes Médicos',
+    'fresa': 'Fresa',
+    'uva': 'Uva',
+    'plato': 'Plato',
+    'vaso': 'Vaso'
+}
 
 # --- Selección de tipo de negocio ---
 if 'business_type' not in st.session_state:
     st.session_state.business_type = None
 
-business_options = {{
+business_options = {
     "Restaurante": "🍽️ Soluciones para Restaurantes",
     "Clínica": "🏥 Soluciones para Clínicas"
-}}
+}
 
 if st.session_state.business_type is None:
     st.title("Plataforma de Herramientas Inteligentes para Restaurantes y Clínicas")
@@ -76,13 +83,13 @@ else:
             options=["Predicción de Demanda", "Análisis de Archivos", "Análisis de Imágenes", "Configuración"],
             icons=["bar-chart-line", "file-earmark-text", "image", "gear"],
             default_index=0,
-            styles={{
-                "container": {{"padding": "5px", "background-color": "#1A1A30"}},
-                "icon": {{"color": PRIMARY_COLOR_FUTURISTIC, "font-size": "20px"}},
-                "nav-link": {{"font-size": "16px", "text-align": "left", "color": TEXT_COLOR}},
-                "nav-link-selected": {{"background-color": PRIMARY_COLOR_FUTURISTIC, "color": "#FFFFFF"}}
-            }}
-        )
+            styles={
+                "container": {"padding": "5px", "background-color": "#1A1A30"},
+                "icon": {"color": PRIMARY_COLOR_FUTURISTIC, "font-size": "20px"},
+                "nav-link": {"font-size": "16px", "text-align": "left", "color": TEXT_COLOR},
+                "nav-link-selected": {"background-color": PRIMARY_COLOR_FUTURISTIC, "color": "#FFFFFF"}
+            }
+)
         # --- Herramientas de la plataforma ---
 
 def predict_demand_section():
