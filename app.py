@@ -210,4 +210,36 @@ else:
 
             fig = go.Figure()
             fig.add_trace(go.Scatter(
-                x=df["Frame"], y
+                x=df["Frame"], y=df["Personas Detectadas"],
+                mode="lines+markers", name="Personas", line=dict(color="#00bcd4")
+            ))
+            fig.add_hline(
+                y=10, line_dash="dash", line_color="red",
+                annotation_text="Aforo máximo", annotation_position="top left"
+            )
+            fig.update_layout(
+                title="Conteo de personas por cuadro",
+                xaxis_title="Frame", yaxis_title="Cantidad",
+                plot_bgcolor="#0A0A1E", paper_bgcolor="#0A0A1E",
+                font=dict(color="#E0E0E0")
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+            st.subheader("Detalle de Datos")
+            st.dataframe(df.style.highlight_max(axis=0, color="lightgreen"), use_container_width=True)
+
+    def settings_section():
+        st.title("⚙️ Configuración")
+        st.markdown("Aquí podrá personalizar ajustes generales de la plataforma en futuras versiones.")
+
+    # Ruteo final de herramientas
+    if selected == "Predicción de Demanda":
+        predict_demand_section()
+    elif selected == "Análisis de Archivos":
+        file_analysis_section()
+    elif selected == "Análisis de Imágenes":
+        image_analysis_section()
+    elif selected == "Análisis de Vídeo":
+        video_analysis_section()
+    elif selected == "Configuración":
+        settings_section()
