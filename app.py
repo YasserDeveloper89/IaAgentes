@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -8,10 +7,8 @@ import plotly.express as px
 from ultralytics import YOLO
 from PIL import Image
 
-# Configuración de página
 st.set_page_config(page_title="Herramientas Inteligentes", layout="wide")
 
-# Estilos personalizados
 st.markdown("""
     <style>
         .stApp { background-color: #0A0A1E; color: #E0E0E0; font-family: 'Segoe UI', sans-serif; }
@@ -33,16 +30,15 @@ st.markdown("""
 
 LABEL_TRANSLATIONS = {
     'person': 'Persona', 'bottle': 'Botella', 'cup': 'Taza',
-    'syringe': 'Jeringa', 'mask': 'Mascarilla', 'gloves': 'Guantes Médicos',
-    'strawberry': 'Fresa', 'grape': 'Uva', 'dish': 'Plato', 'glass': 'Vaso'
+    'jeringa': 'Jeringa', 'mascarilla': 'Mascarilla', 'guantes medicos': 'Guantes Médicos',
+    'fresa': 'Fresa', 'uva': 'Uva', 'plato': 'Plato', 'vaso': 'Vaso'
 }
 
-# Lógica de selección del negocio
 if 'business_type' not in st.session_state:
     st.session_state.business_type = None
 
 if st.session_state.business_type is None:
-    st.title("Plataforma de herramientas inteligentes para restaurantes y clínicas")
+    st.title("Plataforma de Herramientas Inteligentes para Restaurantes y Clínicas")
     st.markdown("Seleccione el tipo de negocio para comenzar a utilizar las herramientas disponibles.")
     col1, col2 = st.columns(2)
     with col1:
@@ -61,9 +57,9 @@ else:
 
     with st.sidebar:
         selected = option_menu(
-            menu_title="Herramientas",
-            options=["Predicción de Demanda", "Análisis de Archivos", "Análisis de Imágenes", "Configuración"],
-            icons=["bar-chart-line", "file-earmark-text", "image", "gear"],
+            menu_title="Herramientas de IA",
+            options=["Predicción de Demanda", "Análisis de Archivos", "Análisis de Imágenes", "Análisis de Vídeo", "Configuración"],
+            icons=["bar-chart-line", "file-earmark-text", "image", "camera-video", "gear"],
             default_index=0,
             styles={
                 "container": {"padding": "5px", "background-color": "#1A1A30"},
@@ -71,11 +67,8 @@ else:
                 "nav-link": {"font-size": "16px", "text-align": "left", "color": "#E0E0E0"},
                 "nav-link-selected": {"background-color": "#00BCD4", "color": "#FFFFFF"}
             }
-        )
-
-    # === Definición de herramientas ===
-
-    def predict_demand_section():
+    )
+        def predict_demand_section():
         st.title("Predicción de Demanda")
         archivo = st.file_uploader("Suba un archivo CSV con columnas: fecha, elemento, cantidad", type=["csv"])
         if archivo:
@@ -127,7 +120,7 @@ else:
         st.title("Análisis de Imágenes")
         modelo = st.radio("Modelo de detección", ["YOLOv8 General", "YOLO-World"])
 
-        objetos_por_defecto = "strawberry, grape, banana, empanada, pie, pizza, plate, knife, fork" if st.session_state.business_type == "Restaurante" else "face mask, syringe, medical gloves, thermometer, hospital bed"
+        objetos_por_defecto = "strawberry, grape, banana, empanada, pizza, plate, knife, fork" if st.session_state.business_type == "Restaurante" else "face mask, syringe, medical gloves, thermometer, hospital bed"
         objetos = st.text_input("Objetos personalizados (solo YOLO-World)", value=objetos_por_defecto)
 
         archivo = st.file_uploader("Cargue una imagen (jpg/png)", type=["jpg", "jpeg", "png"])
@@ -145,7 +138,7 @@ else:
                     return
 
             resultado = modelo_yolo(imagen)[0]
-            st.image(resultado.plot(), caption="Resultado del análisis", use_container_width=True)
+            st.image(resultado.plot(), caption="Resultado", use_container_width=True)
 
             cajas = resultado.boxes.data.cpu().numpy()
             nombres = resultado.names
@@ -166,16 +159,49 @@ else:
             else:
                 st.info("No se detectaron objetos en la imagen.")
 
+    def video_analysis_section():
+        st.title("Análisis de Vídeo")
+        st.markdown("Suba un vídeo grabado. La IA analizará cuántas personas aparecen por cuadro (limitado a los primeros 150).")
+
+        video_file = st.file_uploader("Seleccione un archivo de vídeo", type=["mp4", "mov", "avi"])
+        if video_file:
+            import tempfile
+            import cv2
+
+            temp = tempfile.NamedTemporaryFile(delete=False)
+            temp.write(video_file.read())
+            cap = cv2.VideoCapture(temp.name)
+
+            model = YOLO("yolov8n.pt")
+            frame_count = 0
+            data = []
+
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret or frame_count > 150:
+                    break
+                result = model(frame, verbose=False)[0]
+                boxes = result.boxes
+                persons = sum(1 for i in range(len(boxes.cls)) if int(boxes.cls[i]) == 0)
+                data.append({"Frame": frame_count, "Personas Detectadas": persons})
+                frame_count += 1
+            cap.release()
+
+            df = pd.DataFrame(data)
+            st.dataframe(df)
+            st.plotly_chart(px.line(df, x="Frame", y="Personas Detectadas", title="Conteo de personas por cuadro"))
+
     def settings_section():
         st.title("Configuración")
         st.markdown("Espacio reservado para ajustes futuros.")
 
-    # Ruteo corregido
     if selected == "Predicción de Demanda":
         predict_demand_section()
     elif selected == "Análisis de Archivos":
         file_analysis_section()
     elif selected == "Análisis de Imágenes":
         image_analysis_section()
+    elif selected == "Análisis de Vídeo":
+        video_analysis_section()
     elif selected == "Configuración":
         settings_section()
