@@ -9,7 +9,7 @@ from PIL import Image
 
 # --- Configuración de la página y estilo visual ---
 st.set_page_config(
-    page_title="Plataforma de Herramientas Inteligentes",
+    page_title="Plataforma de herramientas inteligentes",
     layout="wide",
     initial_sidebar_state="expanded",
     page_icon="🧠"
@@ -43,7 +43,7 @@ if 'business_type' not in st.session_state:
     st.session_state.business_type = None
 
 if st.session_state.business_type is None:
-    st.title("Plataforma de Herramientas Inteligentes para Restaurantes y Clínicas")
+    st.title("Plataforma de herramientas inteligentes para restaurantes y clínicas")
     st.markdown("Seleccione el tipo de negocio para comenzar a utilizar las herramientas disponibles.")
     col1, col2 = st.columns(2)
     with col1:
@@ -63,7 +63,7 @@ else:
     with st.sidebar:
         selected = option_menu(
             menu_title="Herramientas de IA",
-            options=["Predicción de Demanda", "Análisis de Archivos", "Análisis de Imágenes", "Configuración"],
+            options=["Predicción de demanda", "Análisis de archivos", "Análisis de imágenes", "Configuración"],
             icons=["bar-chart-line", "file-earmark-text", "image", "gear"],
             default_index=0,
             styles={
@@ -76,7 +76,7 @@ else:
         # --- Herramientas disponibles ---
 
 def predict_demand_section():
-    st.title("Predicción de Demanda de Productos")
+    st.title("Predicción de demanda de productos")
     st.markdown("Esta herramienta permite estimar la demanda futura de un producto a partir de datos históricos.")
 
     file = st.file_uploader("Seleccione un archivo CSV con columnas: fecha, elemento, cantidad", type=["csv"])
@@ -120,7 +120,7 @@ def predict_demand_section():
         st.dataframe(pred_df)
 
 def file_analysis_section():
-    st.title("Análisis de Archivos CSV")
+    st.title("Análisis de archivos CSV")
     st.markdown("Este módulo permite visualizar y explorar datos tabulares almacenados en archivos CSV.")
 
     file = st.file_uploader("Seleccione un archivo CSV", type=["csv"])
@@ -133,8 +133,8 @@ def file_analysis_section():
         desc = df.describe(include='all').T
         desc.rename(columns={
             "count": "Cantidad",
-            "unique": "Valores Únicos",
-            "top": "Valor Más Frecuente",
+            "unique": "Valores únicos",
+            "top": "Valor más frecuente",
             "freq": "Frecuencia",
             "mean": "Promedio",
             "std": "Desviación Estándar",
@@ -155,7 +155,7 @@ def file_analysis_section():
             st.plotly_chart(px.box(df, y=col, title=f"Boxplot de {col}"))
 
 def image_analysis_section():
-    st.title("Análisis de Imágenes con Detección de Objetos")
+    st.title("Análisis de imágenes con detección de objetos")
     st.markdown("Detecta objetos en imágenes utilizando modelos de inteligencia artificial.")
 
     modelo = st.radio("Modelo de detección", ["YOLOv8 General", "YOLO-World"])
@@ -164,7 +164,7 @@ def image_analysis_section():
     if st.session_state.business_type == "Restaurante":
         objetos_default = "fresa, uva, empanada, plato, cuchillo, vaso"
     elif st.session_state.business_type == "Clínica":
-        objetos_default = "jeringa, mascarilla, guantes médicos, termómetro, camilla"
+        objetos_default = "face mask, syringe, thermometer, hospital bed, medicine bottle"
 
     objetos = st.text_input(
         "Lista de objetos personalizados (solo para YOLO-World)",
