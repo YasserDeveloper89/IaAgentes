@@ -128,49 +128,55 @@ else:
                 st.plotly_chart(px.histogram(df, x=col, nbins=30))
                 st.plotly_chart(px.box(df, y=col))
                 def image_analysis_section():
-                st.title("🖼 Análisis de Imágenes con IA")
-                st.markdown("Suba una imagen y detecte automáticamente objetos relevantes para su negocio usando modelos de visión por computadora.")
+    st.title("🖼 Análisis de Imágenes con IA")
+    st.markdown("Suba una imagen y detecte automáticamente objetos relevantes para su negocio usando modelos de visión por computadora.")
 
-        modelo = st.radio("Modelo de detección", ["YOLOv8 General", "YOLO-World"])
-        objetos_por_defecto = "strawberry, grape, banana, empanada, pizza, plate, knife, fork" if st.session_state.business_type == "Restaurante" else "face mask, syringe, medical gloves, thermometer, hospital bed"
-        objetos = st.text_input("Objetos personalizados (solo YOLO-World)", value=objetos_por_defecto)
+    modelo = st.radio("Modelo de detección", ["YOLOv8 General", "YOLO-World"])
 
-        archivo = st.file_uploader("Cargue una imagen (JPG o PNG)", type=["jpg", "jpeg", "png"])
-        if archivo:
-            imagen = Image.open(archivo)
-            st.image(imagen, caption="Imagen original", use_container_width=True)
-            modelo_yolo = YOLO("yolov8n.pt" if modelo == "YOLOv8 General" else "yolov8s-world.pt")
+    objetos_por_defecto = (
+        "strawberry, grape, banana, empanada, pizza, plate, knife, fork"
+        if st.session_state.business_type == "Restaurante"
+        else "face mask, syringe, medical gloves, thermometer, hospital bed"
+    )
 
-            if modelo == "YOLO-World" and objetos.strip():
-                try:
-                    modelo_yolo.set_classes([o.strip().lower() for o in objetos.split(",") if o.strip()])
-                except Exception as e:
-                    st.warning("Error con CLIP. Asegúrese de tener la librería adecuada instalada.")
-                    st.error(str(e))
-                    return
+    objetos = st.text_input("Objetos personalizados (solo YOLO-World)", value=objetos_por_defecto)
 
-            resultado = modelo_yolo(imagen)[0]
-            st.image(resultado.plot(), caption="Resultado del análisis", use_container_width=True)
+    archivo = st.file_uploader("Cargue una imagen (JPG o PNG)", type=["jpg", "jpeg", "png"])
+    if archivo:
+        imagen = Image.open(archivo)
+        st.image(imagen, caption="Imagen original", use_container_width=True)
 
-            cajas = resultado.boxes.data.cpu().numpy()
-            nombres = resultado.names
-            filas = []
-            for box in cajas:
-                x1, y1, x2, y2, conf, clase = box
-                etiqueta = nombres[int(clase)]
-                traduccion = LABEL_TRANSLATIONS.get(etiqueta.lower(), etiqueta)
-                filas.append({
-                    "Objeto Detectado": traduccion,
-                    "Confianza": f"{conf*100:.2f}%",
-                    "Ubicación": f"[{int(x1)}, {int(y1)}, {int(x2)}, {int(y2)}]"
-                })
+        modelo_yolo = YOLO("yolov8n.pt" if modelo == "YOLOv8 General" else "yolov8s-world.pt")
 
-            if filas:
-                st.subheader("Objetos detectados")
-                st.dataframe(pd.DataFrame(filas))
-            else:
-                st.info("No se detectaron objetos en la imagen.")
+        if modelo == "YOLO-World" and objetos.strip():
+            try:
+                modelo_yolo.set_classes([o.strip().lower() for o in objetos.split(",") if o.strip()])
+            except Exception as e:
+                st.warning("Error con CLIP. Asegúrese de tener la librería adecuada instalada.")
+                st.error(str(e))
+                return
 
+        resultado = modelo_yolo(imagen)[0]
+        st.image(resultado.plot(), caption="Resultado del análisis", use_container_width=True)
+
+        cajas = resultado.boxes.data.cpu().numpy()
+        nombres = resultado.names
+        filas = []
+        for box in cajas:
+            x1, y1, x2, y2, conf, clase = box
+            etiqueta = nombres[int(clase)]
+            traduccion = LABEL_TRANSLATIONS.get(etiqueta.lower(), etiqueta)
+            filas.append({
+                "Objeto Detectado": traduccion,
+                "Confianza": f"{conf*100:.2f}%",
+                "Ubicación": f"[{int(x1)}, {int(y1)}, {int(x2)}, {int(y2)}]"
+            })
+
+        if filas:
+            st.subheader("Objetos detectados")
+            st.dataframe(pd.DataFrame(filas))
+        else:
+            st.info("No se detectaron objetos en la imagen.")
     def video_analysis_section():
         st.title("🎥 Análisis de Vídeo con Detección de Personas")
         st.markdown("Suba un vídeo corto. El sistema analizará cuántas personas aparecen por cuadro.")
