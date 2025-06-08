@@ -76,7 +76,7 @@ else:
         )
 
     def predict_demand_section():
-        st.title("📈 Predicción de Demanda")
+        st.title("📈 Predicción de demanda")
         st.markdown("Suba un archivo CSV con columnas `fecha`, `elemento`, `cantidad`. Se proyectará la demanda futura de un producto.")
 
         archivo = st.file_uploader("Suba su archivo CSV", type=["csv"])
@@ -105,7 +105,7 @@ else:
             st.dataframe(pred)
 
     def file_analysis_section():
-        st.title("📂 Análisis de Archivos CSV")
+        st.title("📂 Análisis de archivos CSV")
         st.markdown("Cargue un archivo CSV para obtener estadísticas descriptivas y gráficas automáticas.")
 
         archivo = st.file_uploader("Suba su archivo CSV", type=["csv"])
@@ -130,7 +130,7 @@ else:
 
     # La función image_analysis_section ha sido dedentada para estar al mismo nivel que las otras.
     def image_analysis_section():
-        st.title("🖼 Análisis de Imágenes con IA")
+        st.title("🖼 Análisis de imágenes con IA")
         st.markdown("Suba una imagen y detecte automáticamente objetos relevantes para su negocio usando modelos de visión por computadora.")
 
         modelo = st.radio("Modelo de detección", ["YOLOv8 General", "YOLO-World"])
@@ -181,7 +181,7 @@ else:
                 st.info("No se detectaron objetos en la imagen.")
 
     def video_analysis_section():
-        st.title("🎥 Análisis de Vídeo con Detección de Personas")
+        st.title("🎥 Análisis de vídeo con detección de personas")
         st.markdown("Suba un vídeo corto. El sistema analizará cuántas personas aparecen por cuadro.")
 
         video_file = st.file_uploader("Seleccione un vídeo (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
